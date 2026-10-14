@@ -128,7 +128,7 @@ def dashboard():
     if request.accept_mimetypes.accept_json and not request.accept_mimetypes.accept_html:
         return jsonify(data)
         
-    return render_template('dashboard.html', data=data)
+    return render_template('professor/dashboard.html', data=data)
 
 
 @professor.route('/trilhas/<int:trilha_id>', methods=['GET'])
@@ -158,7 +158,7 @@ def trilha_detail(trilha_id):
     data = _serialize_trilha(trilha, enrollment, completed_ids)
     if request.accept_mimetypes.accept_json and not request.accept_mimetypes.accept_html:
         return jsonify(data)
-    return render_template('trilha.html', trilha=data)
+    return render_template('professor/trilha.html', trilha=data)
 
 
 @professor.route('/tarefas/<int:task_id>', methods=['GET'])
@@ -190,7 +190,7 @@ def task_detail(task_id):
     if request.accept_mimetypes.accept_json and not request.accept_mimetypes.accept_html:
         return jsonify(data)
         
-    return render_template('tarefa.html', task=data)
+    return render_template('professor/tarefa.html', task=data)
 
 
 @professor.route('/feedback', methods=['GET'])
@@ -210,7 +210,7 @@ def feedback_form_context():
     }
     if request.accept_mimetypes.accept_json and not request.accept_mimetypes.accept_html:
         return jsonify(data)
-    return render_template('feedback.html', data=data)
+    return render_template('professor/feedback.html', data=data)
 
 
 @professor.route('/feedback', methods=['POST'])

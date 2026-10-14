@@ -325,6 +325,16 @@ p {
   background: #eff6ff;
 }
 
+.button.danger {
+  background: #dc2626;
+  color: #ffffff;
+}
+
+.button.danger:hover {
+  background: #b91c1c;
+  color: #ffffff;
+}
+
 .task-preview-list,
 .resource-list {
   list-style: none;
