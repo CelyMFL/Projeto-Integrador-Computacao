@@ -9,8 +9,7 @@ def test_acess_professor_routes(client):
     tarefa = TaskService.create_task(trilha.id, "Tarefa de teste", ordem=1)
 
     # Autenticar como usuário com role PROFESSOR
-    helper = testHelper()
-    helper.authenticate_user(client, RoleEnum.PROFESSOR)
+    testHelper.authenticate_user(client, RoleEnum.PROFESSOR)
 
     routes = [
         '/professor/dashboard',

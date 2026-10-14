@@ -1,32 +1,16 @@
 import pytest
+from tests.helpers import testHelper
+from app.models.user import RoleEnum
 
-from app import db
-from app.models.user import User, RoleEnum
 
-
-def autenticar_usuario(client, role):
-    usuario = User(
-        nome="Usuário de Teste",
-        email=f"{role.value}@teste.com",
-        senha="senhatemporaria",
-        role=role
-    )
-
-    db.session.add(usuario)
-    db.session.commit()
-
-    with client.session_transaction() as session:
-        session['_user_id'] = str(usuario.id)
-        session['_fresh'] = True  # Marca a sessão como "fresh" para simular um login bem-sucedido
 
 
 def test_acess_admin_routes(client):
     # Autenticar como usuário com role ADMIN
-    autenticar_usuario(client, RoleEnum.ADMIN)
+    testHelper.authenticate_user(client, RoleEnum.ADMIN)
 
     routes = [
         '/admin/',
-        #'/admin/analytics',
         '/admin/professores',
         '/admin/trilhas',
         '/admin/tarefas-feedbacks',
