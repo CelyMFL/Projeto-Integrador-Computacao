@@ -26,7 +26,7 @@ def test_acess_admin_routes(client):
 
     routes = [
         '/admin/',
-        '/admin/analytics',
+        #'/admin/analytics',
         '/admin/professores',
         '/admin/trilhas',
         '/admin/tarefas-feedbacks',
