@@ -7,12 +7,17 @@
 
 <p>Bem-vindo, {{ user.nome }}</p>
 
-<ul>
+<ul aria-label="Lista de tarefas do checklist">
     {% for task in tasks %}
         <li>
-            {{ task.descricao }} - {{ task.status }}
+            <span>{{ task.descricao }}</span>
+            <span aria-hidden="true"> - </span>
+            <span>Status: {{ task.status }}</span>
         </li>
     {% endfor %}
+    {% if not tasks %}
+        <li>Nenhuma tarefa cadastrada.</li>
+    {% endif %}
 </ul>
 
 {% endblock %}

@@ -1,0 +1,281 @@
+/**
+ * accessibility.css
+ * Estilos que suportam os recursos de acessibilidade de accessibility.js.
+ * Aditivo: não substitui style.css, apenas complementa.
+ */
+
+:root {
+  --a11y-font-scale: 1;
+  --a11y-focus-color: #0b3d91;
+  --a11y-focus-width: 3px;
+}
+
+/* Aplica a escala de fonte escolhida pelo usuário (WCAG 1.4.4 / 1.4.8) a toda a página. */
+html {
+  font-size: calc(100% * var(--a11y-font-scale, 1));
+}
+
+/* Respeita a preferência do sistema operacional por padrão, além da alternância manual. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ---------- Utilitário: oculto visualmente, disponível para leitores de tela ---------- */
+.a11y-visually-hidden {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+/* ---------- Link "Pular para o conteúdo principal" (2.4.1) ---------- */
+.a11y-skip-link {
+  position: absolute;
+  left: 8px;
+  top: -60px;
+  z-index: 10000;
+  background: #000000;
+  color: #ffffff;
+  padding: 12px 20px;
+  border-radius: 4px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: top 0.15s ease-in-out;
+}
+.a11y-skip-link:focus {
+  top: 8px;
+  outline: var(--a11y-focus-width) solid #ffbf00;
+  outline-offset: 2px;
+}
+
+/* ---------- Foco visível reforçado (2.4.13 Aparência do Foco) ---------- */
+:focus-visible {
+  outline: var(--a11y-focus-width) solid var(--a11y-focus-color) !important;
+  outline-offset: 3px !important;
+}
+html.a11y-kbd-user *:focus {
+  outline: var(--a11y-focus-width) solid var(--a11y-focus-color) !important;
+  outline-offset: 3px !important;
+}
+
+/* ---------- Tamanho mínimo de alvos de clique/toque (2.5.5 Aprimorado — 44x44px) ---------- */
+button,
+.button,
+a.button,
+input[type="submit"],
+input[type="button"] {
+  min-height: 44px;
+  min-width: 44px;
+  padding-left: 16px;
+  padding-right: 16px;
+}
+nav.topnav a,
+.topnav a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 8px 10px;
+}
+
+/* ---------- Alto contraste — visa relação de contraste 7:1 (1.4.6 Aprimorado) ---------- */
+.a11y-contrast-high,
+.a11y-contrast-high body {
+  background: #ffffff !important;
+  color: #000000 !important;
+}
+.a11y-contrast-high * {
+  background-color: #ffffff !important;
+  background-image: none !important;
+  color: #000000 !important;
+  border-color: #000000 !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+}
+.a11y-contrast-high a {
+  color: #002e99 !important;
+  text-decoration: underline !important;
+}
+.a11y-contrast-high a:visited {
+  color: #4b0082 !important;
+}
+.a11y-contrast-high button,
+.a11y-contrast-high .button,
+.a11y-contrast-high a.button,
+.a11y-contrast-high input[type="submit"] {
+  background-color: #000000 !important;
+  color: #ffffff !important;
+  border: 2px solid #000000 !important;
+}
+.a11y-contrast-high button:hover,
+.a11y-contrast-high .button:hover {
+  background-color: #222222 !important;
+}
+.a11y-contrast-high input,
+.a11y-contrast-high select,
+.a11y-contrast-high textarea {
+  border: 2px solid #000000 !important;
+}
+
+/* ---------- Espaçamento ampliado de texto (1.4.8 Apresentação Visual / 1.4.12) ---------- */
+.a11y-spacing-wide,
+.a11y-spacing-wide * {
+  line-height: 1.8 !important;
+  letter-spacing: 0.12em !important;
+  word-spacing: 0.16em !important;
+}
+.a11y-spacing-wide p,
+.a11y-spacing-wide li {
+  margin-bottom: 1.5em !important;
+}
+
+/* ---------- Sublinhar todos os links (apoio a 1.4.1 Uso da Cor) ---------- */
+.a11y-underline-links a {
+  text-decoration: underline !important;
+}
+
+/* ---------- Fonte facilitada de leitura ---------- */
+.a11y-dyslexia-font,
+.a11y-dyslexia-font * {
+  font-family: Verdana, Tahoma, "Comic Sans MS", sans-serif !important;
+  letter-spacing: 0.04em !important;
+}
+
+/* ---------- Reduzir animações (2.3.3 Animação por Interações) ---------- */
+.a11y-reduce-motion *,
+.a11y-reduce-motion *::before,
+.a11y-reduce-motion *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+  scroll-behavior: auto !important;
+}
+
+/* ---------- Toast de status acessível (4.1.3 Mensagens de Status) ---------- */
+.a11y-toast {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  transform: translateX(-50%) translateY(20px);
+  max-width: 90vw;
+  background: #1f2933;
+  color: #ffffff;
+  padding: 14px 20px;
+  border-radius: 8px;
+  font-size: 1rem;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  z-index: 10001;
+}
+.a11y-toast-visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+.a11y-toast-error {
+  background: #7a0c1e;
+}
+.a11y-toast-success {
+  background: #14532d;
+}
+
+/* ---------- Toolbar de acessibilidade ---------- */
+#a11y-toolbar {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 9999;
+  font-family: Arial, Helvetica, sans-serif;
+}
+#a11y-toolbar-toggle {
+  background: #0b3d91;
+  color: #ffffff;
+  border: 2px solid #0b3d91;
+  border-radius: 999px;
+  padding: 10px 18px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
+}
+#a11y-toolbar-toggle:hover {
+  background: #08306b;
+}
+#a11y-toolbar-panel {
+  margin-top: 10px;
+  width: 300px;
+  max-width: calc(100vw - 32px);
+  max-height: 70vh;
+  overflow-y: auto;
+  background: #ffffff;
+  color: #111111;
+  border: 2px solid #0b3d91;
+  border-radius: 10px;
+  padding: 16px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+.a11y-toolbar-title {
+  font-size: 1.05rem;
+  margin: 0 0 12px 0;
+}
+.a11y-control-group {
+  margin-bottom: 14px;
+}
+.a11y-control-label {
+  display: block;
+  font-weight: 700;
+  margin-bottom: 6px;
+  font-size: 0.9rem;
+}
+.a11y-btn-row {
+  display: flex;
+  gap: 8px;
+}
+.a11y-btn-row button {
+  flex: 1;
+  min-width: 0;
+  background: #f1f3f5;
+  border: 2px solid #0b3d91;
+  border-radius: 6px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.a11y-toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  font-size: 0.92rem;
+  cursor: pointer;
+  min-height: 44px;
+}
+.a11y-toggle-row input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+.a11y-reset-btn {
+  width: 100%;
+  margin-top: 8px;
+  background: #f1f3f5;
+  border: 2px solid #6b7280;
+  border-radius: 6px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+@media (max-width: 480px) {
+  #a11y-toolbar-panel {
+    width: calc(100vw - 32px);
+  }
+}

@@ -1,17 +1,18 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin - Dashboard</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/accessibility.css') }}">
 </head>
 <body>
-    <header class="topbar">
+    <header class="topbar" role="banner">
         <div class="topbar-content">
             <h1>Painel Administrativo</h1>
-            <nav class="topnav">
-                <a href="{{ url_for('admin.home') }}" class="active">Dashboard</a>
+            <nav class="topnav" aria-label="Navegação principal">
+                <a href="{{ url_for('admin.home') }}" class="active" aria-current="page">Dashboard</a>
                 <a href="{{ url_for('admin.professores') }}">Professores</a>
                 <a href="{{ url_for('admin.trilhas_management') }}">Trilhas</a>
                 <a href="{{ url_for('admin.tasks_feedbacks_management') }}">Tarefas/Feedbacks</a>
@@ -20,7 +21,7 @@
         </div>
     </header>
 
-    <main class="container">
+    <main id="main-content" tabindex="-1" class="container">
         <div class="section-header">
             <div>
                 <span class="eyebrow">Visão Geral</span>
@@ -28,36 +29,38 @@
             </div>
         </div>
 
-        <div class="cards-grid">
-            <div class="card progress-summary">
-                <span class="muted">Total Usuários</span>
-                <span class="progress-number" id="total_users">{{ metrics.total_users }}</span>
+        <div class="cards-grid" role="list" aria-label="Métricas do sistema">
+            <div class="card progress-summary" role="listitem">
+                <span class="muted" id="label-total-users">Total Usuários</span>
+                <span class="progress-number" id="total_users" aria-labelledby="label-total-users">{{ metrics.total_users }}</span>
             </div>
-            <div class="card progress-summary">
-                <span class="muted">Total Professores</span>
-                <span class="progress-number" id="total_professores">{{ metrics.total_professores }}</span>
+            <div class="card progress-summary" role="listitem">
+                <span class="muted" id="label-total-prof">Total Professores</span>
+                <span class="progress-number" id="total_professores" aria-labelledby="label-total-prof">{{ metrics.total_professores }}</span>
             </div>
-            <div class="card progress-summary">
-                <span class="muted">Total Trilhas</span>
-                <span class="progress-number" id="total_trilhas">{{ metrics.total_trilhas }}</span>
+            <div class="card progress-summary" role="listitem">
+                <span class="muted" id="label-total-trilhas">Total Trilhas</span>
+                <span class="progress-number" id="total_trilhas" aria-labelledby="label-total-trilhas">{{ metrics.total_trilhas }}</span>
             </div>
-            <div class="card progress-summary">
-                <span class="muted">Obrigatórias</span>
-                <span class="progress-number" id="total_obrigatorias">{{ metrics.total_obrigatorias }}</span>
+            <div class="card progress-summary" role="listitem">
+                <span class="muted" id="label-obrigatorias">Obrigatórias</span>
+                <span class="progress-number" id="total_obrigatorias" aria-labelledby="label-obrigatorias">{{ metrics.total_obrigatorias }}</span>
             </div>
-            <div class="card progress-summary">
-                <span class="muted">Feedbacks</span>
-                <span class="progress-number" id="total_feedbacks">{{ metrics.total_feedbacks }}</span>
+            <div class="card progress-summary" role="listitem">
+                <span class="muted" id="label-feedbacks">Feedbacks</span>
+                <span class="progress-number" id="total_feedbacks" aria-labelledby="label-feedbacks">{{ metrics.total_feedbacks }}</span>
             </div>
-            <div class="card progress-summary">
-                <span class="muted">Concluídas</span>
-                <span class="progress-number" id="trilhas_concluidas">{{ metrics.trilhas_concluidas }}</span>
+            <div class="card progress-summary" role="listitem">
+                <span class="muted" id="label-concluidas">Concluídas</span>
+                <span class="progress-number" id="trilhas_concluidas" aria-labelledby="label-concluidas">{{ metrics.trilhas_concluidas }}</span>
             </div>
-             <div class="card progress-summary">
-                <span class="muted">Em Andamento</span>
-                <span class="progress-number" id="trilhas_em_andamento">{{ metrics.trilhas_em_andamento }}</span>
+             <div class="card progress-summary" role="listitem">
+                <span class="muted" id="label-andamento">Em Andamento</span>
+                <span class="progress-number" id="trilhas_em_andamento" aria-labelledby="label-andamento">{{ metrics.trilhas_em_andamento }}</span>
             </div>
         </div>
     </main>
+
+    <script src="{{ url_for('static', filename='js/accessibility.js') }}" defer></script>
 </body>
 </html>

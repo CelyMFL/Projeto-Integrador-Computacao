@@ -1,13 +1,14 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Minha integração</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/accessibility.css') }}">
 </head>
 <body>
-  <header class="topbar">
+  <header class="topbar" role="banner">
     <div class="topbar-content">
       <div>
         <span class="eyebrow">Onboarding docente</span>
@@ -15,8 +16,8 @@
         <p>Acompanhe suas trilhas, tarefas pendentes e progresso inicial na instituição.</p>
       </div>
 
-      <nav class="topnav">
-        <a href="{{ url_for('professor.dashboard') }}" class="active">Dashboard</a>
+      <nav class="topnav" aria-label="Navegação principal">
+        <a href="{{ url_for('professor.dashboard') }}" class="active" aria-current="page">Dashboard</a>
         <a href="{{ url_for('professor.dashboard') }}">Trilhas</a> <!-- Redireciona para o dashboard que lista trilhas -->
         <a href="{{ url_for('professor.feedback_form_context') }}">Feedback</a>
       </nav>
@@ -29,31 +30,32 @@
     </div>
   </header>
 
-  <main class="container">
-    <section class="hero-card">
+  <main id="main-content" tabindex="-1" class="container">
+    <section class="hero-card" aria-labelledby="jornada-heading">
       <div>
         <span class="tag">Em andamento</span>
-        <h2>Bem-vindo(a) à sua jornada de adaptação</h2>
+        <h2 id="jornada-heading">Bem-vindo(a) à sua jornada de adaptação</h2>
         <p>
           Este ambiente reúne orientações institucionais, atividades pedagógicas e recursos
           importantes para apoiar seus primeiros passos na instituição.
         </p>
       </div>
 
-      <div class="progress-summary">
-        <span class="progress-number">{{ data.progresso_geral.percentual | round(0) | int }}%</span>
-        <p>da jornada concluída ({{ data.progresso_geral.tarefas_concluidas }}/{{ data.progresso_geral.total_tarefas }})</p>
+      <div class="progress-summary" role="img"
+           aria-label="Progresso geral da jornada: {{ data.progresso_geral.percentual | round(0) | int }}%, {{ data.progresso_geral.tarefas_concluidas }} de {{ data.progresso_geral.total_tarefas }} tarefas concluídas">
+        <span class="progress-number" aria-hidden="true">{{ data.progresso_geral.percentual | round(0) | int }}%</span>
+        <p aria-hidden="true">da jornada concluída ({{ data.progresso_geral.tarefas_concluidas }}/{{ data.progresso_geral.total_tarefas }})</p>
       </div>
     </section>
 
-    <section class="section-header">
+    <section class="section-header" aria-labelledby="trilhas-heading">
       <div>
-        <h2>Suas trilhas</h2>
+        <h2 id="trilhas-heading">Suas trilhas</h2>
         <p>Organize sua adaptação por áreas de orientação.</p>
       </div>
     </section>
 
-    <section class="cards-grid">
+    <section class="cards-grid" aria-label="Lista de trilhas atribuídas">
       {% for trilha in data.trilhas_atribuidas %}
       <article class="card trail-card">
         <div class="card-header">
@@ -72,29 +74,36 @@
           {{ trilha.descricao }}
         </p>
 
-        <div class="progress">
+        <div class="progress" role="progressbar"
+             aria-valuenow="{{ trilha.progresso.percentual | round(0) | int }}"
+             aria-valuemin="0" aria-valuemax="100"
+             aria-label="Progresso da trilha {{ trilha.nome }}: {{ trilha.progresso.percentual | round(0) | int }}%">
           <div class="progress-bar" style="width: {{ trilha.progresso.percentual | round(0) | int }}%;"></div>
         </div>
 
         <div class="card-footer">
           <span>{{ trilha.progresso.tarefas_concluidas }} de {{ trilha.progresso.total_tarefas }} tarefas</span>
-          <a href="{{ url_for('professor.trilha_detail', trilha_id=trilha.id) }}" class="button">Abrir trilha</a>
+          <a href="{{ url_for('professor.trilha_detail', trilha_id=trilha.id) }}" class="button"
+             aria-label="Abrir trilha {{ trilha.nome }}">Abrir trilha</a>
         </div>
       </article>
       {% endfor %}
+      {% if not data.trilhas_atribuidas %}
+      <p class="muted">Nenhuma trilha atribuída no momento.</p>
+      {% endif %}
     </section>
 
     <section class="dashboard-grid">
-      <article class="card">
-        <h2>Próximas tarefas</h2>
+      <article class="card" aria-labelledby="proximas-tarefas-heading">
+        <h2 id="proximas-tarefas-heading">Próximas tarefas</h2>
 
         <ul class="task-preview-list">
           {% for tarefa in data.proximas_tarefas %}
           <li>
-            <span class="task-dot pending"></span>
+            <span class="task-dot pending" aria-hidden="true"></span>
             <div>
               <strong>{{ tarefa.descricao }}</strong>
-              <p>Trilha {{ tarefa.trilha_id }}</p> <!-- Idealmente teríamos o nome da trilha aqui -->
+              <p><span class="a11y-visually-hidden">Pertence à </span>Trilha {{ tarefa.trilha_id }}</p> <!-- Idealmente teríamos o nome da trilha aqui -->
             </div>
           </li>
           {% else %}
@@ -109,8 +118,8 @@
         <!-- Removed generic 'Ver tarefas' button since each trilha has its own -->
       </article>
 
-      <article class="card">
-        <h2>Feedback</h2>
+      <article class="card" aria-labelledby="feedback-heading">
+        <h2 id="feedback-heading">Feedback</h2>
         <p>
           Ao longo da integração, você pode compartilhar dificuldades,
           dúvidas ou sugestões para melhorar o processo de acolhimento docente.
@@ -120,5 +129,7 @@
       </article>
     </section>
   </main>
+
+  <script src="{{ url_for('static', filename='js/accessibility.js') }}" defer></script>
 </body>
 </html>

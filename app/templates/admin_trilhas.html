@@ -1,37 +1,38 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin - Trilhas</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/accessibility.css') }}">
 </head>
 <body>
-    <header class="topbar">
+    <header class="topbar" role="banner">
         <div class="topbar-content">
             <h1>Gestão de Trilhas</h1>
-            <nav class="topnav">
+            <nav class="topnav" aria-label="Navegação principal">
                 <a href="{{ url_for('admin.home') }}">Dashboard</a>
                 <a href="{{ url_for('admin.professores') }}">Professores</a>
-                <a href="{{ url_for('admin.trilhas_management') }}" class="active">Trilhas</a>
+                <a href="{{ url_for('admin.trilhas_management') }}" class="active" aria-current="page">Trilhas</a>
                 <a href="{{ url_for('admin.tasks_feedbacks_management') }}">Tarefas/Feedbacks</a>
                 <a href="{{ url_for('auth.logout') }}" style="color: #ef4444; margin-left: 20px;">Sair</a>
             </nav>
         </div>
     </header>
 
-    <main class="container">
+    <main id="main-content" tabindex="-1" class="container">
         <div class="section-header">
-            <h2>Trilhas Ativas</h2>
-            <button id="create-trilha-toggle" class="button">+ Criar Nova Trilha</button>
+            <h2 id="trilhas-ativas-heading">Trilhas Ativas</h2>
+            <button id="create-trilha-toggle" class="button" aria-expanded="false" aria-controls="create-trilha-form">+ Criar Nova Trilha</button>
         </div>
 
-        <!-- Create trilha form (hidden by default) -->
-        <div id="create-trilha-form" class="card" style="display:none; margin-bottom:16px;">
-            <form id="form-create-trilha">
+        <!-- Formulário de criação de trilha (oculto por padrão) -->
+        <div id="create-trilha-form" class="card" style="display:none; margin-bottom:16px;" role="group" aria-label="Formulário de nova trilha">
+            <form id="form-create-trilha" data-a11y-confirm="Confirma a criação desta nova trilha?">
                 <div class="form-group">
                     <label for="trilha_nome">Nome</label>
-                    <input id="trilha_nome" name="nome" required />
+                    <input id="trilha_nome" name="nome" aria-required="true" required />
                 </div>
                 <div class="form-group">
                     <label for="trilha_descricao">Descrição</label>
@@ -55,9 +56,9 @@
             </form>
         </div>
 
-        <div class="cards-grid">
+        <div class="cards-grid" role="list" aria-labelledby="trilhas-ativas-heading">
             {% for trilha in trilhas %}
-            <div class="card trail-card">
+            <div class="card trail-card" role="listitem">
                 <div class="card-header">
                     {% if trilha.obrigatoria %}
                     <span class="required">Obrigatória</span>
@@ -73,23 +74,31 @@
                 <div class="card-footer">
                     <span>{{ trilha.total_tarefas }} Tarefas</span>
                     <div class="actions">
-                            <button onclick="openEditTrilha({{ trilha.id }})" class="button ghost">Editar</button>
-                            <button onclick="deleteTrilha({{ trilha.id }})" class="button ghost" style="border-color: #fee2e2; color: #b91c1c;">Excluir</button>
+                            <button onclick="openEditTrilha({{ trilha.id }})" class="button ghost"
+                                    aria-expanded="false" aria-controls="edit-trilha-{{ trilha.id }}"
+                                    aria-label="Editar trilha {{ trilha.nome }}">Editar</button>
+                            <button onclick="deleteTrilha({{ trilha.id }}, '{{ trilha.nome|e }}')" class="button ghost"
+                                    style="border-color: #fee2e2; color: #b91c1c;"
+                                    aria-label="Excluir trilha {{ trilha.nome }}">Excluir</button>
                     </div>
                 </div>
-                    <!-- Edit form (hidden) -->
-                    <div id="edit-trilha-{{ trilha.id }}" class="card" style="display:none; margin-top:10px;">
+                    <!-- Formulário de edição (oculto) -->
+                    <div id="edit-trilha-{{ trilha.id }}" class="card" style="display:none; margin-top:10px;"
+                         role="group" aria-label="Editar trilha {{ trilha.nome }}">
                         <div class="form-group">
-                            <label>Nome</label>
+                            <label for="edit-nome-{{ trilha.id }}">Nome</label>
                             <input type="text" id="edit-nome-{{ trilha.id }}" value="{{ trilha.nome }}" />
                         </div>
                         <div class="form-group">
-                            <label>Descrição</label>
+                            <label for="edit-desc-{{ trilha.id }}">Descrição</label>
                             <input type="text" id="edit-desc-{{ trilha.id }}" value="{{ trilha.descricao }}" />
                         </div>
                         <div class="actions">
-                            <button type="button" class="button" onclick="submitEditTrilha({{ trilha.id }})">Salvar</button>
-                            <button type="button" class="button secondary" onclick="document.getElementById('edit-trilha-{{ trilha.id }}').style.display='none'">Cancelar</button>
+                            <button type="button" class="button" onclick="submitEditTrilha({{ trilha.id }})"
+                                    aria-label="Salvar alterações da trilha {{ trilha.nome }}">Salvar</button>
+                            <button type="button" class="button secondary"
+                                    aria-label="Cancelar edição da trilha {{ trilha.nome }}"
+                                    onclick="closeEditTrilha({{ trilha.id }})">Cancelar</button>
                         </div>
                     </div>
             </div>
@@ -100,30 +109,40 @@
         </div>
     </main>
 
+    <script src="{{ url_for('static', filename='js/accessibility.js') }}" defer></script>
     <script>
-        function deleteTrilha(id) {
-            if (confirm('Tem certeza que deseja excluir esta trilha?')) {
+        function deleteTrilha(id, nome) {
+            if (window.A11y.confirmAction('Tem certeza que deseja excluir a trilha "' + nome + '"? Esta ação não pode ser desfeita.')) {
                 fetch('/trilhas/' + id, {
                     method: 'DELETE',
                 }).then(response => {
                     if (response.ok) {
+                        window.A11y.announce('Trilha excluída com sucesso.');
                         window.location.reload();
                     } else {
-                        alert('Erro ao excluir trilha.');
+                        window.A11y.announce('Erro ao excluir trilha.', true);
                     }
                 });
             }
         }
-        // Create trilha UI handlers
+        // Manipuladores da interface de criação de trilha
         document.getElementById('create-trilha-toggle').addEventListener('click', function() {
             const el = document.getElementById('create-trilha-form');
-            el.style.display = (el.style.display === 'none') ? 'block' : 'none';
+            const isHidden = el.style.display === 'none' || !el.style.display;
+            el.style.display = isHidden ? 'block' : 'none';
+            this.setAttribute('aria-expanded', isHidden ? 'true' : 'false');
+            if (isHidden) document.getElementById('trilha_nome').focus();
         });
         document.getElementById('create-trilha-cancel').addEventListener('click', function(){
             document.getElementById('create-trilha-form').style.display = 'none';
+            document.getElementById('create-trilha-toggle').setAttribute('aria-expanded', 'false');
         });
         document.getElementById('create-trilha-submit').addEventListener('click', function(){
             const form = document.getElementById('form-create-trilha');
+            const nome = document.getElementById('trilha_nome').value.trim();
+            if (!nome) { window.A11y.announce('Informe o nome da trilha.', true); return; }
+            if (!window.A11y.confirmAction('Confirma a criação desta nova trilha?')) return;
+
             const data = new FormData(form);
             // Convert checkbox
             if (document.getElementById('trilha_obrigatoria').checked) data.set('obrigatoria', 'true');
@@ -133,31 +152,44 @@
                 body: data,
             }).then(async res => {
                 if (res.ok) {
+                    window.A11y.announce('Trilha criada com sucesso.');
                     window.location.reload();
                 } else {
                     const body = await res.json().catch(()=>({}));
-                    alert('Erro ao criar trilha: ' + (body.error || res.status));
+                    window.A11y.announce('Erro ao criar trilha: ' + (body.error || res.status), true);
                 }
             });
         });
 
         function openEditTrilha(id) {
-            document.getElementById('edit-trilha-' + id).style.display = 'block';
+            const panel = document.getElementById('edit-trilha-' + id);
+            panel.style.display = 'block';
             window.location.hash = 'edit-trilha-' + id;
+            const firstField = panel.querySelector('input');
+            if (firstField) firstField.focus();
+        }
+
+        function closeEditTrilha(id) {
+            document.getElementById('edit-trilha-' + id).style.display = 'none';
         }
 
         function submitEditTrilha(id) {
             const nome = document.getElementById('edit-nome-' + id).value;
             const descricao = document.getElementById('edit-desc-' + id).value;
+
+            if (!window.A11y.confirmAction('Confirma salvar as alterações desta trilha?')) return;
+
             fetch('/trilhas/' + id, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ nome: nome, descricao: descricao })
             }).then(async res => {
-                if (res.ok) window.location.reload();
-                else {
+                if (res.ok) {
+                    window.A11y.announce('Trilha atualizada com sucesso.');
+                    window.location.reload();
+                } else {
                     const body = await res.json().catch(()=>({}));
-                    alert('Erro ao atualizar trilha: ' + (body.error || res.status));
+                    window.A11y.announce('Erro ao atualizar trilha: ' + (body.error || res.status), true);
                 }
             });
         }

@@ -1,10 +1,20 @@
-DATABASE_USERNAME = "user"
-DATABASE_PASSWORD = "password"
-DATABASE_HOST = "localhost"
-DATABASE_PORT = "3306"
-DATABASE_NAME = "projeto_integrador"
+from dotenv import load_dotenv
+import os
 
-SQLALCHEMY_DATABASE_URI = f"mysql+pymysql://{DATABASE_USERNAME}:{DATABASE_PASSWORD}@{DATABASE_HOST}:{DATABASE_PORT}/{DATABASE_NAME}?ssl_disabled=True"
+load_dotenv()
+
+DATABASE_USERNAME = os.getenv("DATABASE_USERNAME")
+DATABASE_PASSWORD = os.getenv("DATABASE_PASSWORD")
+DATABASE_HOST = os.getenv("DATABASE_HOST")
+DATABASE_PORT = os.getenv("DATABASE_PORT", "3306")
+DATABASE_NAME = os.getenv("DATABASE_NAME")
+
+SQLALCHEMY_DATABASE_URI = (
+    f"mysql+pymysql://{DATABASE_USERNAME}:{DATABASE_PASSWORD}"
+    f"@{DATABASE_HOST}:{DATABASE_PORT}/{DATABASE_NAME}"
+    "?ssl_verify_cert=true"
+)
 
 SQLALCHEMY_TRACK_MODIFICATIONS = False
-SECRET_KEY = "sua_chave_secreta"
+
+SECRET_KEY = os.getenv("SECRET_KEY")

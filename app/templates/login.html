@@ -1,13 +1,14 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 
 <head>
     <!-- Definição de codificação de caracteres e configurações de viewport para responsividade -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pagina de acesso</title>
-    <!-- Vinculação do arquivo de estilos externo -->
+    <title>Página de acesso</title>
+    <!-- Vinculação dos arquivos de estilos externos -->
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/accessibility.css') }}">
 </head>
 
 <body>
@@ -15,35 +16,45 @@
     <div class="main-container">
 
         <!-- Seção de boas-vindas: Fornece contexto e clareza sobre o propósito do portal -->
-        <div class="welcome-section">
+        <header class="welcome-section" role="banner">
             <h1>Bem-vindo ao Onboarding</h1>
             <p class="subtitle">
                 Sua jornada começa aqui. Este portal foi criado para guiar seus primeiros passos,
                 centralizando todas as informações e trilhas de conhecimento que você precisa
                 para crescer com a gente.
             </p>
-        </div>
+        </header>
 
-        <!-- Container do formulário: Centraliza visualmente a interface de autenticação -->
-        <div class="login-container">
-            <form method="POST">
-                <h2>Login</h2>
+        <!-- Conteúdo principal: formulário de autenticação -->
+        <main id="main-content" tabindex="-1" class="login-container">
+            <form method="POST" aria-labelledby="login-heading" novalidate>
+                <h2 id="login-heading">Login</h2>
+
+                {% if get_flashed_messages() %}
+                <div role="alert" class="a11y-visually-hidden">
+                    {% for message in get_flashed_messages() %}{{ message }}{% endfor %}
+                </div>
+                {% endif %}
 
                 <!-- O uso de labels associados aos inputs via 'for' melhora a acessibilidade -->
                 <label for="usuario">E-mail:</label>
-                <input type="email" id="usuario" name="email" placeholder="Digite seu e-mail" required>
+                <input type="email" id="usuario" name="email" placeholder="Digite seu e-mail"
+                       autocomplete="username" aria-required="true" required>
 
                 <label for="senha">Senha:</label>
-                <input type="password" id="senha" name="senha" placeholder="Digite sua senha" required>
+                <input type="password" id="senha" name="senha" placeholder="Digite sua senha"
+                       autocomplete="current-password" aria-required="true" required>
 
                 <!-- Botão de submissão. O type="submit" garante a funcionalidade padrão do formulário -->
                 <button type="submit">Entrar</button>
             </form>
-        </div>
+        </main>
     </div>
-</body>
-<footer>
-    <p>Criado para a disciplina Projeto Integrador I da Universidade Virtual do Estado de São Paulo </p>
-</footer>
 
+    <footer role="contentinfo">
+        <p>Criado para a disciplina Projeto Integrador II da Universidade Virtual do Estado de São Paulo</p>
+    </footer>
+
+    <script src="{{ url_for('static', filename='js/accessibility.js') }}" defer></script>
+</body>
 </html>

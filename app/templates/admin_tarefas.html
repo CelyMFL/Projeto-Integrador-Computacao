@@ -1,48 +1,50 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin - Tarefas e Feedbacks</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/accessibility.css') }}">
     <style>
         .trilha-tasks { display: none; }
         .trilha-tasks.active { display: block; }
     </style>
 </head>
 <body>
-    <header class="topbar">
+    <header class="topbar" role="banner">
         <div class="topbar-content">
             <h1>Conteúdo e Feedbacks</h1>
-            <nav class="topnav">
+            <nav class="topnav" aria-label="Navegação principal">
                 <a href="{{ url_for('admin.home') }}">Dashboard</a>
                 <a href="{{ url_for('admin.professores') }}">Professores</a>
                 <a href="{{ url_for('admin.trilhas_management') }}">Trilhas</a>
-                <a href="{{ url_for('admin.tasks_feedbacks_management') }}" class="active">Tarefas/Feedbacks</a>
+                <a href="{{ url_for('admin.tasks_feedbacks_management') }}" class="active" aria-current="page">Tarefas/Feedbacks</a>
                 <a href="{{ url_for('auth.logout') }}" style="color: #ef4444; margin-left: 20px;">Sair</a>
             </nav>
         </div>
     </header>
 
-    <main class="container">
+    <main id="main-content" tabindex="-1" class="container">
         <div class="dashboard-grid">
-            <section>
+            <section aria-labelledby="tarefas-por-trilha-heading">
                 <div class="card">
                     <div class="section-header">
-                        <h3>Tarefas por Trilha</h3>
+                        <h3 id="tarefas-por-trilha-heading">Tarefas por Trilha</h3>
+                        <label for="trilha-selector" class="a11y-visually-hidden">Selecionar trilha para ver suas tarefas</label>
                         <select id="trilha-selector" style="width: auto;">
                             <option value="">Selecione uma Trilha</option>
                             {% for item in tarefas_por_trilha %}
                             <option value="{{ item.trilha_id }}">{{ item.trilha_nome }}</option>
                             {% endfor %}
                         </select>
-                        <button id="open-add-task" class="button">+ Adicionar Tarefa</button>
+                        <button id="open-add-task" class="button" aria-expanded="false" aria-controls="add-task-form">+ Adicionar Tarefa</button>
                     </div>
 
-                    <div id="add-task-form" class="card" style="display:none; margin-bottom:16px;">
+                    <div id="add-task-form" class="card" style="display:none; margin-bottom:16px;" role="group" aria-label="Formulário de nova tarefa">
                         <div class="form-group">
                             <label for="task-descricao">Descrição</label>
-                            <input id="task-descricao" type="text" />
+                            <input id="task-descricao" type="text" aria-required="true" />
                         </div>
                         <div class="form-group">
                             <label for="task-ordem">Ordem</label>
@@ -65,20 +67,20 @@
                             <button type="button" class="button secondary" id="cancel-add-task">Cancelar</button>
                         </div>
                     </div>
-                    
+
                     <div id="tasks-container">
                         {% for item in tarefas_por_trilha %}
-                        <div id="trilha-{{ item.trilha_id }}" class="trilha-tasks">
+                        <div id="trilha-{{ item.trilha_id }}" class="trilha-tasks" role="region" aria-label="Tarefas da trilha {{ item.trilha_nome }}">
                             <ul class="task-preview-list">
                                 {% for task in item.tarefas %}
                                 <li>
-                                    <div class="task-dot done"></div>
+                                    <div class="task-dot done" aria-hidden="true"></div>
                                     <div style="flex: 1;">
                                         <strong>{{ task.descricao }}</strong>
                                         <p>Ordem: {{ task.ordem }}</p>
                                     </div>
                                     <div class="actions">
-                                        <button class="button ghost">Edit</button>
+                                        <button class="button ghost" aria-label="Editar tarefa: {{ task.descricao }}">Editar</button>
                                     </div>
                                 </li>
                                 {% endfor %}
@@ -89,19 +91,21 @@
                         </div>
                         {% endfor %}
                     </div>
-                    <button class="button" style="width: 100%;" id="open-add-task-bottom">+ Adicionar Tarefa</button>
+                    <button class="button" style="width: 100%;" id="open-add-task-bottom" aria-expanded="false" aria-controls="add-task-form">+ Adicionar Tarefa</button>
                 </div>
             </section>
 
-            <aside>
-                <h3>Feedbacks Recebidos</h3>
+            <aside aria-labelledby="feedbacks-heading">
+                <h3 id="feedbacks-heading">Feedbacks Recebidos</h3>
+                <ul style="list-style: none; padding: 0;" aria-label="Lista de feedbacks recebidos">
                 {% for feed in feedbacks %}
-                <div class="info-box">
-                    <span class="status-pill success">Feedback</span>
-                    <p style="margin-top: 10px;">"{{ feed.comentario }}"</p>
-                    <span class="muted" style="font-size: 12px;">— Enviado por {{ feed.professor_nome }} em {{ feed.data_envio }}</span>
-                </div>
+                    <li class="info-box">
+                        <span class="status-pill success">Feedback</span>
+                        <p style="margin-top: 10px;">{{ feed.comentario }}</p>
+                        <span class="muted" style="font-size: 12px;">— Enviado por {{ feed.professor_nome }} em {{ feed.data_envio }}</span>
+                    </li>
                 {% endfor %}
+                </ul>
                 {% if not feedbacks %}
                 <p class="muted">Nenhum feedback recebido ainda.</p>
                 {% endif %}
@@ -109,27 +113,40 @@
         </div>
     </main>
 
+    <script src="{{ url_for('static', filename='js/accessibility.js') }}" defer></script>
     <script>
         document.getElementById('trilha-selector').addEventListener('change', function() {
             const selectedId = this.value;
             document.querySelectorAll('.trilha-tasks').forEach(el => el.classList.remove('active'));
             if (selectedId) {
                 const target = document.getElementById('trilha-' + selectedId);
-                if (target) target.classList.add('active');
+                if (target) {
+                    target.classList.add('active');
+                    window.A11y.announce('Exibindo tarefas da trilha selecionada.');
+                }
             }
         });
 
         function toggleAddTaskForm() {
             const form = document.getElementById('add-task-form');
-            form.style.display = form.style.display === 'none' ? 'block' : 'none';
+            const isHidden = form.style.display === 'none' || !form.style.display;
+            form.style.display = isHidden ? 'block' : 'none';
+            document.querySelectorAll('#open-add-task, #open-add-task-bottom').forEach(function (btn) {
+                btn.setAttribute('aria-expanded', isHidden ? 'true' : 'false');
+            });
+            if (isHidden) {
+                document.getElementById('task-descricao').focus();
+            }
         }
 
         function submitAddTaskForm() {
             const trilhaId = document.getElementById('trilha-selector').value;
-            if (!trilhaId) { alert('Selecione uma trilha primeiro'); return; }
+            if (!trilhaId) { window.A11y.announce('Selecione uma trilha primeiro.', true); return; }
 
             const descricao = document.getElementById('task-descricao').value.trim();
-            if (!descricao) { alert('Informe a descrição'); return; }
+            if (!descricao) { window.A11y.announce('Informe a descrição da tarefa.', true); return; }
+
+            if (!window.A11y.confirmAction('Confirma a criação desta tarefa?')) return;
 
             const payload = { descricao: descricao };
             const ordem = document.getElementById('task-ordem').value;
@@ -146,8 +163,13 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             }).then(async res => {
-                if (res.ok) window.location.reload();
-                else { const body = await res.json().catch(()=>({})); alert('Erro ao criar tarefa: ' + (body.error || res.status)); }
+                if (res.ok) {
+                    window.A11y.announce('Tarefa criada com sucesso.');
+                    window.location.reload();
+                } else {
+                    const body = await res.json().catch(()=>({}));
+                    window.A11y.announce('Erro ao criar tarefa: ' + (body.error || res.status), true);
+                }
             });
         }
 

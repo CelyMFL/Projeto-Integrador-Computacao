@@ -1,13 +1,14 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Trilha Pedagógica</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/accessibility.css') }}">
 </head>
 <body>
-  <header class="topbar">
+  <header class="topbar" role="banner">
     <div class="topbar-content">
       <div>
         <span class="eyebrow">Trilha de onboarding</span>
@@ -15,39 +16,40 @@
         <p>{{ trilha.descricao }}</p>
       </div>
 
-      <nav class="topnav">
+      <nav class="topnav" aria-label="Navegação principal">
         <a href="{{ url_for('professor.dashboard') }}">Dashboard</a>
-        <a href="#" class="active">Trilhas</a>
+        <a href="#" class="active" aria-current="page">Trilhas</a>
         <a href="{{ url_for('professor.feedback_form_context') }}">Feedback</a>
       </nav>
     </div>
   </header>
 
-  <main class="container">
-    <section class="hero-card">
+  <main id="main-content" tabindex="-1" class="container">
+    <section class="hero-card" aria-labelledby="progresso-heading">
       <div>
         <span class="tag tag-{{ 'blue' if trilha.tipo == 'pedagógica' else 'green' if trilha.tipo == 'institucional' else 'purple' }}">{{ trilha.tipo.capitalize() if trilha.tipo else 'Geral' }}</span>
-        <h2>Progresso da trilha</h2>
+        <h2 id="progresso-heading">Progresso da trilha</h2>
         <p>
           Esta trilha reúne orientações essenciais para apoiar sua atuação em sala,
           alinhamento com a coordenação e entendimento dos critérios pedagógicos.
         </p>
       </div>
 
-      <div class="progress-summary">
-        <span class="progress-number">{{ trilha.progresso.percentual | round(0) | int }}%</span>
-        <p>{{ trilha.progresso.tarefas_concluidas }} de {{ trilha.progresso.total_tarefas }} tarefas concluídas</p>
+      <div class="progress-summary" role="img"
+           aria-label="Progresso da trilha: {{ trilha.progresso.percentual | round(0) | int }}%, {{ trilha.progresso.tarefas_concluidas }} de {{ trilha.progresso.total_tarefas }} tarefas concluídas">
+        <span class="progress-number" aria-hidden="true">{{ trilha.progresso.percentual | round(0) | int }}%</span>
+        <p aria-hidden="true">{{ trilha.progresso.tarefas_concluidas }} de {{ trilha.progresso.total_tarefas }} tarefas concluídas</p>
       </div>
     </section>
 
-    <section class="section-header">
+    <section class="section-header" aria-labelledby="tarefas-heading">
       <div>
-        <h2>Tarefas da trilha</h2>
+        <h2 id="tarefas-heading">Tarefas da trilha</h2>
         <p>Conclua as etapas conforme avança em sua adaptação.</p>
       </div>
     </section>
 
-    <section class="task-list">
+    <section class="task-list" aria-label="Lista de tarefas desta trilha">
       {% for task in trilha.tasks %}
       <article class="card task-card {{ 'done' if task.status == 'concluido' else 'pending' }}">
         <div>
@@ -63,17 +65,22 @@
         </div>
 
         {% if task.status == 'concluido' %}
-        <a href="{{ url_for('professor.task_detail', task_id=task.id) }}" class="button secondary">Ver tarefa</a>
+        <a href="{{ url_for('professor.task_detail', task_id=task.id) }}" class="button secondary"
+           aria-label="Ver tarefa concluída: {{ task.descricao }}">Ver tarefa</a>
         {% else %}
-        <a href="{{ url_for('professor.task_detail', task_id=task.id) }}" class="button">Abrir tarefa</a>
+        <a href="{{ url_for('professor.task_detail', task_id=task.id) }}" class="button"
+           aria-label="Abrir tarefa pendente: {{ task.descricao }}">Abrir tarefa</a>
         {% endif %}
       </article>
       {% endfor %}
+      {% if not trilha.tasks %}
+      <p class="muted">Nenhuma tarefa cadastrada para esta trilha.</p>
+      {% endif %}
     </section>
 
-    <section class="card feedback-callout">
+    <section class="card feedback-callout" aria-labelledby="compartilhar-heading">
       <div>
-        <h2>Compartilhar experiência</h2>
+        <h2 id="compartilhar-heading">Compartilhar experiência</h2>
         <p>
           Caso queira registrar dúvidas, dificuldades ou sugestões durante sua adaptação,
           você pode enviar um feedback sobre o processo de onboarding.
@@ -83,5 +90,7 @@
       <a href="{{ url_for('professor.feedback_form_context') }}" class="button secondary">Enviar feedback</a>
     </section>
   </main>
+
+  <script src="{{ url_for('static', filename='js/accessibility.js') }}" defer></script>
 </body>
 </html>

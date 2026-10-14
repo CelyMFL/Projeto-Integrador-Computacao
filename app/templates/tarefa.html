@@ -1,13 +1,14 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Detalhe da tarefa</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/accessibility.css') }}">
 </head>
 <body>
-  <header class="topbar">
+  <header class="topbar" role="banner">
     <div class="topbar-content">
       <div>
         <span class="eyebrow">Tarefa da trilha {{ task.checklist_id }}</span>
@@ -15,7 +16,7 @@
         <p>Consulte as orientações institucionais antes de concluir esta etapa.</p>
       </div>
 
-      <nav class="topnav">
+      <nav class="topnav" aria-label="Navegação principal">
         <a href="{{ url_for('professor.dashboard') }}">Dashboard</a>
         <a href="{{ url_for('professor.trilha_detail', trilha_id=task.checklist_id) }}">Trilhas</a>
         <a href="{{ url_for('professor.feedback_form_context') }}">Feedback</a>
@@ -23,7 +24,7 @@
     </div>
   </header>
 
-  <main class="container narrow">
+  <main id="main-content" tabindex="-1" class="container narrow">
     <section class="card detail-card">
       <div class="card-header">
         <span class="status-pill {{ 'success' if task.status == 'concluido' else 'warning' }}">{{ 'Concluída' if task.status == 'concluido' else 'Pendente' }}</span>
@@ -41,24 +42,25 @@
         necessárias para conduzir suas primeiras atividades avaliativas com mais segurança.
       </p>
 
-      <h2>Materiais de apoio</h2>
+      <h2 id="materiais-heading">Materiais de apoio</h2>
       {% if task.material_apoio or task.link_apoio or task.documento_apoio %}
-      <ul class="resource-list">
+      <ul class="resource-list" aria-labelledby="materiais-heading">
         {% if task.material_apoio %}
         <li>
-          <a href="#">{{ task.material_apoio }}</a>
+          <a href="#" aria-label="Abrir material de apoio: {{ task.material_apoio }}">{{ task.material_apoio }}</a>
           <span>Material de apoio</span>
         </li>
         {% endif %}
         {% if task.link_apoio %}
         <li>
-          <a href="{{ task.link_apoio }}" target="_blank">Acessar link externo</a>
+          <a href="{{ task.link_apoio }}" target="_blank" rel="noopener noreferrer"
+             aria-label="Acessar link externo de apoio (abre em nova aba)">Acessar link externo</a>
           <span>Link de apoio</span>
         </li>
         {% endif %}
         {% if task.documento_apoio %}
         <li>
-          <a href="#">{{ task.documento_apoio }}</a>
+          <a href="#" aria-label="Abrir documento de apoio: {{ task.documento_apoio }}">{{ task.documento_apoio }}</a>
           <span>Documento de apoio</span>
         </li>
         {% endif %}
@@ -67,7 +69,7 @@
       <p>Nenhum material de apoio específico cadastrado para esta tarefa.</p>
       {% endif %}
 
-      <div class="info-box">
+      <div class="info-box" role="note">
         <strong>Observação:</strong>
         <p>
           Caso ainda tenha dúvidas após consultar os materiais, recomenda-se registrar a dificuldade
@@ -79,15 +81,18 @@
         <a href="{{ url_for('professor.trilha_detail', trilha_id=task.checklist_id) }}" class="button secondary">Voltar para trilha</a>
         {% if task.status != 'concluido' %}
         <form action="{{ url_for('tasks.complete_task', task_id=task.id) }}" method="POST" style="display: inline;">
-            <button type="submit" class="button">Marcar como concluída</button>
+            <button type="submit" class="button" aria-label="Marcar tarefa {{ task.descricao }} como concluída">Marcar como concluída</button>
         </form>
         {% else %}
         <form action="{{ url_for('tasks.incomplete_task', task_id=task.id) }}" method="POST" style="display: inline;">
-            <button type="submit" class="button secondary" style="border-color: var(--color-warning); color: var(--color-warning);">Marcar como pendente</button>
+            <button type="submit" class="button secondary" style="border-color: var(--color-warning); color: var(--color-warning);"
+                    aria-label="Marcar tarefa {{ task.descricao }} como pendente">Marcar como pendente</button>
         </form>
         {% endif %}
       </div>
     </section>
   </main>
+
+  <script src="{{ url_for('static', filename='js/accessibility.js') }}" defer></script>
 </body>
 </html>

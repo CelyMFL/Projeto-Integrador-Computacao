@@ -1,26 +1,36 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt-BR">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Sistema{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/accessibility.css') }}">
 </head>
 <body>
 
-    <nav>
-        {% if current_user.is_authenticated %}
-            <a href="{{ url_for('professor.dashboard') }}">Minha integração</a>
-            
-            {% if current_user.role.value == 'admin' %} <a href="{{ url_for('admin.home') }}">Admin</a>
-            {% endif %}
+    <header class="topbar" role="banner">
+        <nav class="topnav" aria-label="Navegação principal">
+            {% if current_user.is_authenticated %}
+                <a href="{{ url_for('professor.dashboard') }}">Minha integração</a>
 
-            <a href="{{ url_for('auth.logout') }}">Logout (Sair)</a>
-        {% else %}
-            <a href="{{ url_for('auth.login') }}">Entrar</a>
-        {% endif %}
-    </nav>
+                {% if current_user.role.value == 'admin' %}
+                <a href="{{ url_for('admin.home') }}">Admin</a>
+                {% endif %}
+
+                <a href="{{ url_for('auth.logout') }}">Logout (Sair)</a>
+            {% else %}
+                <a href="{{ url_for('auth.login') }}">Entrar</a>
+            {% endif %}
+        </nav>
+    </header>
 
     <hr>
 
-    {% block content %}{% endblock %}
+    <main id="main-content" tabindex="-1">
+        {% block content %}{% endblock %}
+    </main>
 
+    <script src="{{ url_for('static', filename='js/accessibility.js') }}" defer></script>
 </body>
 </html>

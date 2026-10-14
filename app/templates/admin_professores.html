@@ -1,18 +1,19 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin - Professores</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/accessibility.css') }}">
 </head>
 <body>
-    <header class="topbar">
+    <header class="topbar" role="banner">
         <div class="topbar-content">
             <h1>Gestão de Professores</h1>
-            <nav class="topnav">
+            <nav class="topnav" aria-label="Navegação principal">
                 <a href="{{ url_for('admin.home') }}">Dashboard</a>
-                <a href="{{ url_for('admin.professores') }}" class="active">Professores</a>
+                <a href="{{ url_for('admin.professores') }}" class="active" aria-current="page">Professores</a>
                 <a href="{{ url_for('admin.trilhas_management') }}">Trilhas</a>
                 <a href="{{ url_for('admin.tasks_feedbacks_management') }}">Tarefas/Feedbacks</a>
                 <a href="{{ url_for('auth.logout') }}" style="color: #ef4444; margin-left: 20px;">Sair</a>
@@ -20,27 +21,31 @@
         </div>
     </header>
 
-    <main class="container">
+    <main id="main-content" tabindex="-1" class="container">
         <div class="dashboard-grid">
-            <section>
+            <section aria-labelledby="lista-professores-heading">
                 <div class="section-header">
-                    <h2>Lista de Professores</h2>
+                    <h2 id="lista-professores-heading">Lista de Professores</h2>
                 </div>
-                <div class="task-list">
+                <div class="task-list" role="list" aria-label="Professores cadastrados">
                     {% for prof in professores %}
-                    <div class="card task-card {{ 'done' if prof.andamento.percentual == 100 else 'pending' }}">
+                    <div class="card task-card {{ 'done' if prof.andamento.percentual == 100 else 'pending' }}" role="listitem">
                         <div>
                             <strong>{{ prof.nome }}</strong>
                             <p>{{ prof.email }}</p>
                             <span class="tag">{{ prof.trilhas_atribuidas|length }} Trilhas Atribuídas</span>
                         </div>
                         <div class="user-box">
-                            <span>Andamento Geral</span>
-                            <strong>{{ prof.andamento.percentual|int }}%</strong>
+                            <span id="andamento-label-{{ prof.id }}">Andamento Geral</span>
+                            <strong aria-labelledby="andamento-label-{{ prof.id }}">{{ prof.andamento.percentual|int }}%</strong>
                         </div>
-                        <button type="button" class="button ghost" onclick="toggleProfessorEdit({{ prof.id }})">Editar</button>
+                        <button type="button" class="button ghost"
+                                aria-expanded="false" aria-controls="prof-edit-{{ prof.id }}"
+                                aria-label="Editar professor {{ prof.nome }}"
+                                onclick="toggleProfessorEdit({{ prof.id }})">Editar</button>
                     </div>
-                    <div id="prof-edit-{{ prof.id }}" class="card" style="display:none; margin-bottom:12px;">
+                    <div id="prof-edit-{{ prof.id }}" class="card" style="display:none; margin-bottom:12px;"
+                         role="group" aria-label="Editar dados de {{ prof.nome }}">
                         <div class="form-group">
                             <label for="prof-nome-{{ prof.id }}">Nome</label>
                             <input type="text" id="prof-nome-{{ prof.id }}" value="{{ prof.nome }}">
@@ -51,11 +56,16 @@
                         </div>
                         <div class="form-group">
                             <label for="prof-senha-{{ prof.id }}">Senha nova</label>
-                            <input type="password" id="prof-senha-{{ prof.id }}" placeholder="Deixe vazio para manter">
+                            <input type="password" id="prof-senha-{{ prof.id }}" placeholder="Deixe vazio para manter"
+                                   aria-describedby="prof-senha-hint-{{ prof.id }}">
+                            <span id="prof-senha-hint-{{ prof.id }}" class="muted" style="font-size: 12px;">Deixe em branco para manter a senha atual.</span>
                         </div>
                         <div class="actions">
-                            <button type="button" class="button" onclick="submitProfessorEdit({{ prof.id }})">Salvar</button>
-                            <button type="button" class="button secondary" onclick="toggleProfessorEdit({{ prof.id }})">Cancelar</button>
+                            <button type="button" class="button" onclick="submitProfessorEdit({{ prof.id }})"
+                                    aria-label="Salvar alterações de {{ prof.nome }}">Salvar</button>
+                            <button type="button" class="button secondary"
+                                    aria-label="Cancelar edição de {{ prof.nome }}"
+                                    onclick="toggleProfessorEdit({{ prof.id }})">Cancelar</button>
                         </div>
                     </div>
                     {% endfor %}
@@ -65,21 +75,22 @@
                 </div>
             </section>
 
-            <aside>
+            <aside aria-labelledby="novo-professor-heading">
                 <div class="card">
-                    <h3>Novo Professor</h3>
-                    <form class="feedback-form" action="{{ url_for('admin.create_professor') }}" method="POST">
+                    <h3 id="novo-professor-heading">Novo Professor</h3>
+                    <form class="feedback-form" action="{{ url_for('admin.create_professor') }}" method="POST"
+                          data-a11y-confirm="Confirma a criação deste novo professor?" novalidate>
                         <div class="form-group">
                             <label for="nome">Nome Completo</label>
-                            <input type="text" id="nome" name="nome" placeholder="Ex: João Silva" required>
+                            <input type="text" id="nome" name="nome" placeholder="Ex: João Silva" aria-required="true" required>
                         </div>
                         <div class="form-group">
                             <label for="email">E-mail</label>
-                            <input type="email" id="email" name="email" placeholder="email@exemplo.com" required>
+                            <input type="email" id="email" name="email" placeholder="email@exemplo.com" autocomplete="email" aria-required="true" required>
                         </div>
                         <div class="form-group">
                             <label for="senha">Senha</label>
-                            <input type="password" id="senha" name="senha" placeholder="********" required>
+                            <input type="password" id="senha" name="senha" placeholder="********" autocomplete="new-password" aria-required="true" required>
                         </div>
                         <button type="submit" class="button">Salvar Professor</button>
                     </form>
@@ -87,16 +98,27 @@
             </aside>
         </div>
     </main>
+    <script src="{{ url_for('static', filename='js/accessibility.js') }}" defer></script>
     <script>
         function toggleProfessorEdit(id) {
             const box = document.getElementById('prof-edit-' + id);
-            box.style.display = box.style.display === 'none' ? 'block' : 'none';
+            const isHidden = box.style.display === 'none' || !box.style.display;
+            box.style.display = isHidden ? 'block' : 'none';
+            if (isHidden) {
+                const firstField = box.querySelector('input');
+                if (firstField) firstField.focus();
+            }
         }
 
         function submitProfessorEdit(id) {
             const nome = document.getElementById('prof-nome-' + id).value.trim();
             const email = document.getElementById('prof-email-' + id).value.trim();
             const senha = document.getElementById('prof-senha-' + id).value;
+
+            if (!window.A11y.confirmAction('Confirma salvar as alterações deste professor?')) {
+                return;
+            }
+
             const payload = { nome: nome, email: email };
             if (senha) payload.senha = senha;
 
@@ -105,10 +127,12 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             }).then(async res => {
-                if (res.ok) window.location.reload();
-                else {
+                if (res.ok) {
+                    window.A11y.announce('Professor atualizado com sucesso.');
+                    window.location.reload();
+                } else {
                     const body = await res.json().catch(()=>({}));
-                    alert('Erro ao atualizar professor: ' + (body.error || res.status));
+                    window.A11y.announce('Erro ao atualizar professor: ' + (body.error || res.status), true);
                 }
             });
         }

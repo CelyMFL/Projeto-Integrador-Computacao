@@ -75,6 +75,24 @@ python run.py
 
 Aplicação: http://localhost:5000
 
+## Publicar imagem no Azure Container Registry
+
+O script `deploy_acr.py` constrói e publica uma nova versão da imagem no ACR,
+sem alterar o Azure App Service. Consulte o [guia de publicação no Azure](docs/deploy-acr.md)
+para pré-requisitos, detalhes do versionamento e instruções completas.
+
+Simule antes de publicar:
+
+```bash
+python deploy_acr.py --dry-run
+```
+
+Para publicar a imagem no ACR:
+
+```bash
+python deploy_acr.py
+```
+
 ## Atualizações recentes
 
 - telas administrativas ganharam formulários inline para criar/editar trilhas, criar tarefas e editar professores
