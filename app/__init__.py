@@ -5,10 +5,13 @@ from flask_login import LoginManager
 db = SQLAlchemy()
 login_manager = LoginManager()
 
-def create_app():
+def create_app(test_config=None):
     app = Flask(__name__)
     
     app.config.from_object('config')
+
+    if test_config:
+        app.config.update(test_config)
 
     db.init_app(app)
     
@@ -19,7 +22,7 @@ def create_app():
 
     @login_manager.user_loader
     def load_user(user_id):
-        return User.query.get(int(user_id))
+        return db.session.get(User, int(user_id))
 
     @app.route('/')
     def index():
