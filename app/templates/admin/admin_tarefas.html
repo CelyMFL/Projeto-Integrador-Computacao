@@ -160,7 +160,7 @@
 
             fetch('/trilhas/' + trilhaId + '/tasks', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': {{ csrf_token()|tojson }} },
                 body: JSON.stringify(payload)
             }).then(async res => {
                 if (res.ok) {
