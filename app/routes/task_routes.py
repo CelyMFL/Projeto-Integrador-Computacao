@@ -10,6 +10,15 @@ from app.services.professor_checklist_service import ProfessorChecklistService
 tasks = Blueprint('tasks', __name__)
 
 
+def _wants_json_response():
+    """Prefer JSON for JSON requests or clients that explicitly prefer JSON."""
+    return (
+        request.is_json
+        or request.accept_mimetypes['application/json']
+        > request.accept_mimetypes['text/html']
+    )
+
+
 def _payload():
     """Read JSON or form data and return a plain dictionary."""
     # Keep route behavior identical for browser forms and API calls.
@@ -41,7 +50,7 @@ def complete_task(task_id):
 
     try:
         completion = ProfessorChecklistService.mark_task_complete(current_user.id, task_id)
-        if request.accept_mimetypes.accept_html and not request.accept_mimetypes.accept_json:
+        if not _wants_json_response():
             return redirect(url_for('professor.task_detail', task_id=task_id))
         return jsonify({
             'message': 'Tarefa concluída com sucesso',
@@ -61,7 +70,7 @@ def incomplete_task(task_id):
 
     try:
         completion = ProfessorChecklistService.mark_task_incomplete(current_user.id, task_id)
-        if request.accept_mimetypes.accept_html and not request.accept_mimetypes.accept_json:
+        if not _wants_json_response():
             return redirect(url_for('professor.task_detail', task_id=task_id))
         return jsonify({
             'message': 'Tarefa marcada como pendente',

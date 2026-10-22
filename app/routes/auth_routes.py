@@ -42,7 +42,7 @@ def login():
                 return redirect(url_for('professor.dashboard'))
 
     # Se for requisição GET ou houver falha, renderiza o formulário de login
-    return render_template('login.html')
+    return render_template('auth/login.html')
 
 
 

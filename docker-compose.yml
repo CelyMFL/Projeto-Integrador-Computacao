@@ -4,8 +4,8 @@ services:
     restart: always
     environment:
       MYSQL_ROOT_PASSWORD: admin
-      MYSQL_DATABASE: projeto_integrador
-      MYSQL_USER: user
-      MYSQL_PASSWORD: password
+      MYSQL_DATABASE: ${DATABASE_NAME:-projeto_integrador}
+      MYSQL_USER: ${DATABASE_USERNAME:-user}
+      MYSQL_PASSWORD: ${DATABASE_PASSWORD:-password}
     ports:
       - "3306:3306"

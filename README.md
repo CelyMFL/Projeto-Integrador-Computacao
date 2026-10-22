@@ -49,25 +49,33 @@ Estrutura:
 
 ## Execução local
 
-1. Subir MySQL:
+1. Crie o arquivo `.env` a partir do exemplo:
 
 ```bash
-docker-compose up -d
+cp .env.example .env
 ```
 
-2. Instalar dependências:
+No Windows PowerShell, use `Copy-Item .env.example .env`.
+
+2. Subir MySQL:
+
+```bash
+docker compose up -d
+```
+
+3. Instalar dependências:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-3. Criar schema:
+4. Criar schema:
 
 ```bash
 python create_db.py
 ```
 
-4. Rodar app:
+5. Rodar app:
 
 ```bash
 python run.py

@@ -53,7 +53,7 @@ def home():
     if current_user.role != RoleEnum.ADMIN:
         return "Acesso negado", 403
 
-    return render_template('admin_dashboard.html', user=current_user, metrics=build_dashboard_metrics())
+    return render_template('admin/admin_dashboard.html', user=current_user, metrics=build_dashboard_metrics())
 
 
 @admin.route('/analytics')
@@ -114,7 +114,7 @@ def professores():
             },
         })
 
-    return render_template('admin_professores.html', user=current_user, professores=payload)
+    return render_template('admin/admin_professores.html', user=current_user, professores=payload)
 
 
 @admin.route('/professores', methods=['POST'])
@@ -198,7 +198,7 @@ def trilhas_management():
         }
         for trilha in trilhas
     ]
-    return render_template('admin_trilhas.html', user=current_user, trilhas=trilhas_data)
+    return render_template('admin/admin_trilhas.html', user=current_user, trilhas=trilhas_data)
 
 
 @admin.route('/tarefas-feedbacks', methods=['GET'])
@@ -243,4 +243,4 @@ def tasks_feedbacks_management():
             for item in feedbacks
         ],
     }
-    return render_template('admin_tarefas.html', user=current_user, **data)
+    return render_template('admin/admin_tarefas.html', user=current_user, **data)

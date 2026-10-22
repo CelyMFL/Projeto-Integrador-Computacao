@@ -85,7 +85,7 @@
         </form>
         {% else %}
         <form action="{{ url_for('tasks.incomplete_task', task_id=task.id) }}" method="POST" style="display: inline;">
-            <button type="submit" class="button secondary" style="border-color: var(--color-warning); color: var(--color-warning);"
+            <button type="submit" class="button danger";"
                     aria-label="Marcar tarefa {{ task.descricao }} como pendente">Marcar como pendente</button>
         </form>
         {% endif %}
