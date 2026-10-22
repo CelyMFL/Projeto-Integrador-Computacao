@@ -30,6 +30,7 @@
         <!-- Formulário de criação de trilha (oculto por padrão) -->
         <div id="create-trilha-form" class="card" style="display:none; margin-bottom:16px;" role="group" aria-label="Formulário de nova trilha">
             <form id="form-create-trilha" data-a11y-confirm="Confirma a criação desta nova trilha?">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <div class="form-group">
                     <label for="trilha_nome">Nome</label>
                     <input id="trilha_nome" name="nome" aria-required="true" required />
@@ -115,6 +116,7 @@
             if (window.A11y.confirmAction('Tem certeza que deseja excluir a trilha "' + nome + '"? Esta ação não pode ser desfeita.')) {
                 fetch('/trilhas/' + id, {
                     method: 'DELETE',
+                    headers: { 'X-CSRFToken': {{ csrf_token()|tojson }} },
                 }).then(response => {
                     if (response.ok) {
                         window.A11y.announce('Trilha excluída com sucesso.');
@@ -181,7 +183,7 @@
 
             fetch('/trilhas/' + id, {
                 method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': {{ csrf_token()|tojson }} },
                 body: JSON.stringify({ nome: nome, descricao: descricao })
             }).then(async res => {
                 if (res.ok) {

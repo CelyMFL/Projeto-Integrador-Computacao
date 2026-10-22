@@ -34,6 +34,7 @@
 
       <form class="feedback-form" method="POST" action="{{ url_for('professor.submit_feedback') }}"
             data-a11y-confirm="Confirma o envio do seu feedback? Revise as respostas antes de continuar." novalidate>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="form-group">
           <label for="trilha_id">Trilha relacionada (Opcional)</label>
           <select id="trilha_id" name="trilha_id">
