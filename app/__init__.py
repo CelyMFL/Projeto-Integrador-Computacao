@@ -14,6 +14,10 @@ def create_app(test_config=None):
         app.config.update(test_config)
 
     db.init_app(app)
+
+    from app.utils import youtube_embed, pdf_src
+    app.jinja_env.filters["youtube_embed"] = youtube_embed
+    app.jinja_env.filters["pdf_src"] = pdf_src
     
     login_manager.init_app(app)
     login_manager.login_view = "auth.login"

@@ -3,16 +3,19 @@
 Aplicação Flask para onboarding de professores com autenticação por sessão, trilhas, tarefas, acompanhamento de progresso e feedback.
 
 O projeto combina duas formas de entrega no mesmo backend:
+
 - telas HTML server-side renderizadas com Jinja2
 - endpoints JSON para integração com front-end/API clients
 
 ## Escopo atual
 
 Perfis:
+
 - professor
 - admin
 
 Fluxos implementados:
+
 - login/logout com Flask-Login
 - dashboard do professor (trilhas atribuídas, progresso geral, próximas tarefas)
 - detalhe de trilha e detalhe de tarefa
@@ -24,6 +27,7 @@ Fluxos implementados:
 ## Arquitetura
 
 Camadas principais:
+
 - routes: contratos HTTP e controle de acesso
 - services: regras de negócio e validações
 - models: entidades SQLAlchemy
@@ -31,12 +35,13 @@ Camadas principais:
 - database: MySQL
 
 Estrutura:
+
 - app/models
 - app/services
 - app/routes
 - app/templates
 - app/static
-- app/__init__.py
+- app/**init**.py
 
 ## Stack
 
@@ -117,35 +122,42 @@ python seed.py
 ```
 
 Credenciais de seed:
+
 - admin: admin@test.com / 123
 - professor: prof@test.com / 123
 
 ## Modelo de dados
 
 User:
+
 - id, nome, email, senha (hash)
 - role: professor | admin
 
 Checklist (trilha):
+
 - id, nome, descricao
 - tipo: pedagógica | institucional | tecnológica
 - obrigatoria (bool)
 
 Task:
+
 - id, descricao, ordem
 - checklist_id
 - material_apoio, link_apoio, documento_apoio
 
 ProfessorTrilha:
+
 - professor_id, trilha_id
 - status: nao_iniciado | em_andamento | concluido
 - data_inicio, data_conclusao
 
 ProfessorChecklist:
+
 - professor_id, task_id
 - concluido, data_conclusao
 
 Feedback:
+
 - professor_id
 - trilha_id (opcional)
 - comentario, data_envio
@@ -167,6 +179,7 @@ Feedback:
 - POST /professor/feedback
 
 Observação de resposta:
+
 - as rotas GET acima retornam HTML por padrão no navegador
 - retornam JSON somente quando o cliente pede explicitamente Accept: application/json (sem preferência por HTML)
 
@@ -218,6 +231,7 @@ Observação de resposta:
 ## Validação realizada
 
 Smoke tests executados com sucesso cobrindo:
+
 - autenticação e logout
 - páginas administrativas HTML
 - criação/edição/exclusão de trilha
@@ -227,11 +241,13 @@ Smoke tests executados com sucesso cobrindo:
 - marcação de tarefa concluída e pendente
 
 Observação:
+
 - `GET /trilhas/<id>/progress` retorna `completion_percentage` no JSON atual
 
 ## Documentação da API
 
 Detalhes de payloads e modos de resposta estão em:
+
 - docs/frontend-api-reference.md
 
 ## Observações técnicas

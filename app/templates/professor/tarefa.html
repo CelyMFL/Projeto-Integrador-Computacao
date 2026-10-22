@@ -27,7 +27,7 @@
   <main id="main-content" tabindex="-1" class="container narrow">
     <section class="card detail-card">
       <div class="card-header">
-        <span class="status-pill {{ 'success' if task.status == 'concluido' else 'warning' }}">{{ 'Concluída' if task.status == 'concluido' else 'Pendente' }}</span>
+        <span id="task-status-pill" class="status-pill {{ 'success' if task.status == 'concluido' else 'warning' }}">{{ 'Concluída' if task.status == 'concluido' else 'Pendente' }}</span>
         <span class="tag tag-blue">Trilha {{ task.checklist_id }}</span>
       </div>
 
@@ -60,13 +60,37 @@
         {% endif %}
         {% if task.documento_apoio %}
         <li>
-          <a href="#" aria-label="Abrir documento de apoio: {{ task.documento_apoio }}">{{ task.documento_apoio }}</a>
+          <a href="{{ task.documento_apoio | pdf_src or '#' }}" aria-label="Abrir documento de apoio: {{ task.documento_apoio }}">{{ task.documento_apoio }}</a>
           <span>Documento de apoio</span>
         </li>
         {% endif %}
       </ul>
       {% else %}
       <p>Nenhum material de apoio específico cadastrado para esta tarefa.</p>
+      {% endif %}
+
+      {% set video = task.link_apoio | youtube_embed %}
+      {% if video %}
+      <h3>Vídeo de apoio</h3>
+      <div id="video-wrapper" class="embed-wrapper"
+           data-complete-url="{{ url_for('tasks.complete_task', task_id=task.id) }}"
+           data-concluida="{{ 'true' if task.status == 'concluido' else 'false' }}">
+        <iframe id="video-player"
+                src="{{ video }}?enablejsapi=1&amp;origin={{ request.host_url.rstrip('/') | urlencode }}"
+                title="Vídeo de apoio da tarefa: {{ task.descricao }}"
+                allow="encrypted-media; picture-in-picture" allowfullscreen loading="lazy"
+                referrerpolicy="strict-origin-when-cross-origin"></iframe>
+      </div>
+      <p id="video-status" class="video-status" role="status" aria-live="polite"></p>
+      {% endif %}
+
+      {% set pdf = task.documento_apoio | pdf_src %}
+      {% if pdf %}
+      <h3>Documento de apoio</h3>
+      <div class="embed-wrapper embed-pdf">
+        <iframe src="{{ pdf }}" title="Documento de apoio: {{ task.documento_apoio }}" loading="lazy"></iframe>
+      </div>
+      <p><a href="{{ pdf }}" target="_blank" rel="noopener noreferrer">Abrir documento em nova aba</a></p>
       {% endif %}
 
       <div class="info-box" role="note">
@@ -80,7 +104,8 @@
       <div class="actions">
         <a href="{{ url_for('professor.trilha_detail', trilha_id=task.checklist_id) }}" class="button secondary">Voltar para trilha</a>
         {% if task.status != 'concluido' %}
-        <form action="{{ url_for('tasks.complete_task', task_id=task.id) }}" method="POST" style="display: inline;">
+        <form id="task-status-form" action="{{ url_for('tasks.complete_task', task_id=task.id) }}" method="POST" style="display: inline;"
+              data-incomplete-url="{{ url_for('tasks.incomplete_task', task_id=task.id) }}">
             <button type="submit" class="button" aria-label="Marcar tarefa {{ task.descricao }} como concluída">Marcar como concluída</button>
         </form>
         {% else %}
@@ -94,5 +119,8 @@
   </main>
 
   <script src="{{ url_for('static', filename='js/accessibility.js') }}" defer></script>
+  {% if video %}
+  <script src="{{ url_for('static', filename='js/video-progress.js') }}" defer></script>
+  {% endif %}
 </body>
 </html>
