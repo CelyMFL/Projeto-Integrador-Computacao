@@ -22,7 +22,12 @@ def create_app(test_config=None):
 
     @login_manager.user_loader
     def load_user(user_id):
-        return db.session.get(User, int(user_id))
+        try:
+            parsed_id = int(user_id)
+        except (TypeError, ValueError):
+            return None
+
+        return db.session.get(User, parsed_id)
 
     @app.route('/')
     def index():
