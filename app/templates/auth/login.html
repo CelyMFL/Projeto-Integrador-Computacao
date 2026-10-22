@@ -28,6 +28,7 @@
         <!-- Conteúdo principal: formulário de autenticação -->
         <main id="main-content" tabindex="-1" class="login-container">
             <form method="POST" aria-labelledby="login-heading" novalidate>
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <h2 id="login-heading">Login</h2>
 
                 {% if get_flashed_messages() %}

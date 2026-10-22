@@ -80,6 +80,7 @@
                     <h3 id="novo-professor-heading">Novo Professor</h3>
                     <form class="feedback-form" action="{{ url_for('admin.create_professor') }}" method="POST"
                           data-a11y-confirm="Confirma a criação deste novo professor?" novalidate>
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <div class="form-group">
                             <label for="nome">Nome Completo</label>
                             <input type="text" id="nome" name="nome" placeholder="Ex: João Silva" aria-required="true" required>
@@ -124,7 +125,7 @@
 
             fetch('/admin/professores/' + id, {
                 method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': {{ csrf_token()|tojson }} },
                 body: JSON.stringify(payload)
             }).then(async res => {
                 if (res.ok) {

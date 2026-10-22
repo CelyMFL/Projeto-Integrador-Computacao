@@ -11,6 +11,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 
 from app import db
 from app.models import RoleEnum, User
+from tests.helpers import get_csrf_token
 
 
 PASSWORDS = {"admin": "Admin-seguro-123", "a": "Professor-A-123", "b": "Professor-B-456"}
@@ -41,9 +42,14 @@ def auth_users(app, password_hashes):
 @pytest.fixture
 def auth_request(app, client):
     """Reutiliza client/app, mas não compartilha g._login_user entre requisições."""
-    def send(path, *, browser=None, **kwargs):
+    def send(path, *, browser=None, with_csrf=True, **kwargs):
+        browser = browser if browser is not None else client
+        if with_csrf and kwargs.get("method", "GET").upper() in {"POST", "PUT", "PATCH", "DELETE"}:
+            headers = dict(kwargs.get("headers", {}))
+            headers.setdefault("X-CSRFToken", get_csrf_token(browser))
+            kwargs["headers"] = headers
         with app.app_context():
-            return (browser if browser is not None else client).open(path, **kwargs)
+            return browser.open(path, **kwargs)
     return send
 
 
@@ -149,6 +155,7 @@ def test_au06_missing_form_fields_are_rejected(client, auth_users, auth_request,
     before = database_state()
     response = auth_request("/auth/login", method="POST", data=payload)
     assert response.status_code == 400
+    assert "CSRF" not in response.get_data(as_text=True)
     assert_anonymous(client)
     assert database_state() == before
 
@@ -161,6 +168,7 @@ def test_au06_unsupported_login_formats_do_not_authenticate(client, auth_users, 
     before = database_state()
     response = auth_request("/auth/login", method="POST", **request_body)
     assert response.status_code == 400  # A rota atual lê exclusivamente request.form.
+    assert "CSRF" not in response.get_data(as_text=True)
     assert_anonymous(client)
     assert database_state() == before
 
@@ -309,9 +317,10 @@ def test_sessions_are_independent_between_browsers(app, client, auth_users, auth
     pytest.param(None, id="anonymous"),
     pytest.param("b", id="preserve-existing-identity"),
 ])
+@pytest.mark.parametrize("token_kind", ["missing", "invalid", "other-session"])
 def test_au13_cross_site_login_without_csrf_protection_is_rejected(
-        client, auth_users, auth_request, existing_actor):
-    """POST externo sem token não deve autenticar nem substituir a identidade.
+        app, client, auth_users, auth_request, existing_actor, token_kind):
+    """POST externo sem token válido não deve autenticar nem substituir a identidade.
 
     A segurança depende da sessão e do acesso protegido, não do status do POST.
     """
@@ -322,9 +331,16 @@ def test_au13_cross_site_login_without_csrf_protection_is_rejected(
     else:
         assert_anonymous(client)
 
-    login(auth_request, auth_users, "a", headers={
+    headers = {
         "Origin": "https://external.example", "Referer": "https://external.example/form",
-    })
+    }
+    if token_kind != "missing":
+        get_csrf_token(client)
+        headers["X-CSRFToken"] = (
+            "token-invalido" if token_kind == "invalid"
+            else get_csrf_token(app.test_client())
+        )
+    login(auth_request, auth_users, "a", with_csrf=False, headers=headers)
     with client.session_transaction() as session:
         session_user_id = session.get("_user_id")
     protected = auth_request("/professor/dashboard", headers=JSON_HEADERS)
@@ -342,3 +358,25 @@ def test_au13_cross_site_login_without_csrf_protection_is_rejected(
         ), "Login cross-site sem token alterou a identidade ou o acesso da sessão existente"
         assert_identity(client, auth_users[existing_actor]["id"])
     assert database_state() == before
+
+
+def test_login_without_csrf_is_rejected_even_with_same_origin(client, auth_users, auth_request):
+    before = database_state()
+    response = login(auth_request, auth_users, "a", with_csrf=False, headers={
+        "Origin": "http://localhost", "Referer": "http://localhost/auth/login",
+    })
+    assert response.status_code == 400
+    assert "CSRF token is missing" in response.get_data(as_text=True)
+    assert_anonymous(client)
+    assert_login_redirect(auth_request("/professor/dashboard"), "/professor/dashboard")
+    assert database_state() == before
+
+
+def test_login_accepts_rendered_form_token(client, auth_users, auth_request):
+    response = auth_request("/auth/login", method="POST", with_csrf=False, data={
+        "email": auth_users["a"]["email"], "senha": PASSWORDS["a"],
+        "csrf_token": get_csrf_token(client),
+    })
+    assert response.status_code == 302
+    assert_identity(client, auth_users["a"]["id"])
+    assert auth_request("/professor/dashboard", headers=JSON_HEADERS).get_json()["user"] == auth_users["a"]

@@ -11,6 +11,7 @@ from urllib.parse import parse_qs, urlsplit
 
 import pytest
 from werkzeug.http import http_date
+from tests.helpers import csrf_token_from_response, get_csrf_token
 
 from app import db
 from app.models import (
@@ -129,6 +130,8 @@ def request_route(client, method, path, data, transport):
         "task_ids": f"{data['reorder_task']},{data['task']}" if "reorder_task" in data else str(data["task"]),
     }
     kwargs = {"headers": {"Accept": "application/json" if transport == "json" else "text/html"}}
+    if method in ("POST", "PUT", "PATCH", "DELETE"):
+        kwargs["headers"]["X-CSRFToken"] = get_csrf_token(client)
     if method in ("POST", "PUT", "PATCH"):
         kwargs["json" if transport == "json" else "data"] = payload
     return client.open(path.format(**data), method=method, **kwargs)
@@ -419,7 +422,8 @@ def test_ac05_mutations_ignore_forged_professor_id(client, permission_data, oper
              "start": f"/trilhas/{d['available']}/start", "feedback": "/professor/feedback"}
     payload = {"professor_id": d[other], "user_id": d[other],
                "comentario": "Feedback com autor forjado", "trilha_id": d["track"]}
-    response = client.post(paths[operation], headers={"Accept": "application/json"},
+    response = client.post(paths[operation], headers={"Accept": "application/json",
+                                                    "X-CSRFToken": get_csrf_token(client)},
                            **{"json" if transport == "json" else "data": payload})
     assert response.status_code == (201 if operation in ("start", "feedback") else 200)
     body = response.get_json()
@@ -489,3 +493,103 @@ def test_ac05_mutations_ignore_forged_professor_id(client, permission_data, oper
         assert [r for r in after["feedbacks"] if r["id"] != new[0]["id"]] == before["feedbacks"]
         assert after["professor_trilhas"] == before["professor_trilhas"]
         assert after["professor_checklists"] == before["professor_checklists"]
+
+
+@pytest.mark.parametrize("method,path,actor", [
+    (method, path, actor)
+    for routes, actor in ((ADMIN_ROUTES, "admin"), (PROFESSOR_ROUTES, "a"))
+    for method, path in routes if method != "GET"
+])
+@pytest.mark.parametrize("token", [None, "token-invalido"], ids=["missing", "invalid"])
+def test_csrf_rejects_mutations_before_database_changes(client, permission_data, method, path, actor, token):
+    authenticate(client, permission_data[actor])
+    get_csrf_token(client)
+    before = snapshot()
+    headers = {} if token is None else {"X-CSRFToken": token}
+    response = client.open(path.format(**permission_data), method=method, headers=headers)
+    assert response.status_code == 400
+    assert "CSRF token is" in response.get_data(as_text=True)
+    assert snapshot() == before
+    with client.session_transaction() as session:
+        assert session["_user_id"] == str(permission_data[actor])
+
+
+def test_csrf_admin_forms_and_javascript_mutations(app, client, permission_data):
+    import json
+    import re
+
+    authenticate(client, permission_data["admin"])
+
+    def send(path, **kwargs):
+        with app.app_context():
+            return client.open(path, **kwargs)
+
+    def javascript_headers(page):
+        # Usa o token realmente renderizado no cabeçalho dos fetch existentes.
+        response = send(page)
+        assert response.status_code == 200
+        token = re.search(r"'X-CSRFToken': (\"[^\"]+\")", response.get_data(as_text=True))
+        assert token is not None
+        return {"X-CSRFToken": json.loads(token.group(1))}
+
+    response = send("/admin/professores", method="POST", headers={"Accept": "text/html"}, data={
+        "csrf_token": csrf_token_from_response(send("/admin/professores")),
+        "nome": "Novo professor", "email": "novo@csrf.test", "senha": "Senha-segura-123",
+    })
+    assert response.status_code == 302
+    user = User.query.filter_by(email="novo@csrf.test").one()
+    user_id = user.id
+    response = send(f"/admin/professores/{user_id}", method="PATCH",
+                    headers=javascript_headers("/admin/professores"), json={"nome": "Nome atualizado"})
+    assert response.status_code == 200
+    db.session.expire_all()
+    assert db.session.get(User, user_id).nome == "Nome atualizado"
+
+    response = send("/trilhas/", method="POST", content_type="multipart/form-data", data={
+        "csrf_token": csrf_token_from_response(send("/admin/trilhas")),
+        "nome": "Trilha CSRF", "tipo": TipoEnum.PEDAGOGICA.value,
+    })
+    assert response.status_code == 201
+    track_id = response.get_json()["id"]
+    headers = javascript_headers("/admin/trilhas")
+    for method in ("PUT", "PATCH"):
+        response = send(f"/trilhas/{track_id}", method=method, headers=headers,
+                        json={"nome": f"Trilha {method}"})
+        assert response.status_code == 200
+        db.session.expire_all()
+        assert db.session.get(Checklist, track_id).nome == f"Trilha {method}"
+
+    response = send(f"/trilhas/{track_id}/tasks", method="POST",
+                    headers=javascript_headers("/admin/tarefas-feedbacks"), json={"descricao": "Tarefa CSRF"})
+    assert response.status_code == 201
+    task_id = response.get_json()["id"]
+    assert db.session.get(Task, task_id).checklist_id == track_id
+    response = send(f"/trilhas/{track_id}", method="DELETE", headers=headers)
+    assert response.status_code == 200
+    db.session.expire_all()
+    assert db.session.get(Checklist, track_id) is None
+    assert db.session.get(Task, task_id) is None
+
+
+def test_csrf_professor_rendered_forms_keep_working(app, client, permission_data):
+    authenticate(client, permission_data["a"])
+
+    def send(path, **kwargs):
+        with app.app_context():
+            return client.open(path, **kwargs)
+
+    task_id = permission_data["task"]
+    for operation, completed in (("complete", True), ("incomplete", False)):
+        token = csrf_token_from_response(send(f"/professor/tarefas/{task_id}"))
+        response = send(f"/tasks/{task_id}/{operation}", method="POST", data={"csrf_token": token})
+        assert response.status_code == 302
+        db.session.expire_all()
+        record = ProfessorChecklist.query.filter_by(professor_id=permission_data["a"], task_id=task_id).one()
+        assert record.concluido is completed
+
+    response = send("/professor/feedback", method="POST", headers={"Accept": "text/html"}, data={
+        "csrf_token": csrf_token_from_response(send("/professor/feedback")),
+        "comentario": "Feedback com CSRF", "trilha_id": permission_data["track"],
+    })
+    assert response.status_code == 302
+    assert Feedback.query.filter_by(comentario="Feedback com CSRF").one().professor_id == permission_data["a"]
