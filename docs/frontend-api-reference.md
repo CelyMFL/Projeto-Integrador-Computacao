@@ -407,15 +407,50 @@ Retorno:
 
 ```json
 {
-  "total_users": 12,
-  "total_professores": 10,
-  "total_trilhas": 6,
-  "total_obrigatorias": 3,
-  "total_feedbacks": 15,
-  "trilhas_concluidas": 9,
-  "trilhas_em_andamento": 4
+  "summary": {
+    "total_users": 12,
+    "total_professores": 10,
+    "total_trilhas": 6,
+    "total_obrigatorias": 3,
+    "total_feedbacks": 15,
+    "trilhas_concluidas": 9,
+    "trilhas_em_andamento": 4,
+    "conclusao_global_percentual": 64.3,
+    "tempo_medio_conclusao_dias": 11.2,
+    "feedbacks_ultimos_30_dias": 6,
+    "ativacoes_ultimos_30_dias": 8
+  },
+  "analytics": {
+    "status_distribution": {
+      "labels": ["Não iniciado", "Em andamento", "Concluído"],
+      "values": [2, 4, 9]
+    },
+    "trilhas_por_tipo": {
+      "labels": ["Pedagógica", "Institucional", "Tecnológica"],
+      "values": [3, 1, 2]
+    },
+    "feedback_timeline": {
+      "labels": ["2026-05", "2026-06", "2026-07"],
+      "values": [2, 1, 3]
+    },
+    "ativacoes_timeline": {
+      "labels": ["2026-05", "2026-06", "2026-07"],
+      "values": [4, 2, 3]
+    },
+    "completion_by_trilha": {
+      "labels": ["Trilha Pedagógica", "Trilha Tecnológica"],
+      "values": [72.5, 48.0]
+    },
+    "insights": [
+      "Taxa global de conclusão em 64.3%.",
+      "Tempo médio de conclusão estimado em 11.2 dias."
+    ]
+  }
 }
 ```
+
+Observação:
+- o campo `ativacoes_timeline` funciona como proxy de acesso/engajamento usando inícios de trilha (`data_inicio`).
 
 ### GET /admin/professores
 

@@ -47,7 +47,7 @@
       <ul class="resource-list" aria-labelledby="materiais-heading">
         {% if task.material_apoio %}
         <li>
-          <a href="#" aria-label="Abrir material de apoio: {{ task.material_apoio }}">{{ task.material_apoio }}</a>
+          <span>{{ task.material_apoio }}</span>
           <span>Material de apoio</span>
         </li>
         {% endif %}
@@ -112,7 +112,7 @@
         {% else %}
         <form action="{{ url_for('tasks.incomplete_task', task_id=task.id) }}" method="POST" style="display: inline;">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <button type="submit" class="button danger";"
+          <button type="submit" class="button danger"
                     aria-label="Marcar tarefa {{ task.descricao }} como pendente">Marcar como pendente</button>
         </form>
         {% endif %}

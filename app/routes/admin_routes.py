@@ -1,10 +1,13 @@
 """Rotas do administrador para telas de gestão e dashboard."""
 
+from collections import defaultdict
+from datetime import datetime, timedelta
+
 from flask import Blueprint, render_template, jsonify, request, redirect, url_for
 from flask_login import login_required, current_user
 from app.models.user import RoleEnum
 from app.models.user import User
-from app.models.checklist import Checklist
+from app.models.checklist import Checklist, TipoEnum
 from app.models.feedback import Feedback
 from app.models.professor_trilha import ProfessorTrilha, StatusEnum
 from app.models.professor_checklist import ProfessorChecklist
@@ -24,6 +27,18 @@ def _payload():
     return data
 
 
+def _month_bucket(date_value):
+    if not date_value:
+        return None
+    return date_value.strftime('%Y-%m')
+
+
+def _safe_percentage(part, whole):
+    if not whole:
+        return 0.0
+    return round((part / whole) * 100, 1)
+
+
 def build_dashboard_metrics():
     """Constrói um conjunto de métricas para exibição no dashboard do admin."""
     total_users = User.query.count()
@@ -33,6 +48,26 @@ def build_dashboard_metrics():
     total_feedbacks = Feedback.query.count()
     trilhas_concluidas = ProfessorTrilha.query.filter_by(status=StatusEnum.CONCLUIDO).count()
     trilhas_em_andamento = ProfessorTrilha.query.filter_by(status=StatusEnum.EM_ANDAMENTO).count()
+    total_jornadas = ProfessorTrilha.query.count()
+    concluidas_com_data = ProfessorTrilha.query.filter(
+        ProfessorTrilha.status == StatusEnum.CONCLUIDO,
+        ProfessorTrilha.data_inicio.isnot(None),
+        ProfessorTrilha.data_conclusao.isnot(None),
+    ).all()
+    if concluidas_com_data:
+        tempo_medio = sum(
+            max((item.data_conclusao - item.data_inicio).days, 0)
+            for item in concluidas_com_data
+        ) / len(concluidas_com_data)
+    else:
+        tempo_medio = 0
+
+    limite_30_dias = datetime.utcnow() - timedelta(days=30)
+    feedbacks_recentes = Feedback.query.filter(Feedback.data_envio >= limite_30_dias).count()
+    ativacoes_recentes = ProfessorTrilha.query.filter(
+        ProfessorTrilha.data_inicio.isnot(None),
+        ProfessorTrilha.data_inicio >= limite_30_dias,
+    ).count()
 
     return {
         'total_users': total_users,
@@ -42,6 +77,114 @@ def build_dashboard_metrics():
         'total_feedbacks': total_feedbacks,
         'trilhas_concluidas': trilhas_concluidas,
         'trilhas_em_andamento': trilhas_em_andamento,
+        'conclusao_global_percentual': _safe_percentage(trilhas_concluidas, total_jornadas),
+        'tempo_medio_conclusao_dias': round(tempo_medio, 1),
+        'feedbacks_ultimos_30_dias': feedbacks_recentes,
+        'ativacoes_ultimos_30_dias': ativacoes_recentes,
+    }
+
+
+def build_dashboard_analytics():
+    """Produz payload analítico detalhado para gráficos e insights do dashboard."""
+    status_counts = {
+        'Não iniciado': ProfessorTrilha.query.filter_by(status=StatusEnum.NAO_INICIADO).count(),
+        'Em andamento': ProfessorTrilha.query.filter_by(status=StatusEnum.EM_ANDAMENTO).count(),
+        'Concluído': ProfessorTrilha.query.filter_by(status=StatusEnum.CONCLUIDO).count(),
+    }
+
+    tipo_map = {
+        TipoEnum.PEDAGOGICA: 'Pedagógica',
+        TipoEnum.INSTITUCIONAL: 'Institucional',
+        TipoEnum.TECNOLOGICA: 'Tecnológica',
+    }
+    trilhas_tipo_counts = {}
+    for tipo_enum, tipo_label in tipo_map.items():
+        trilhas_tipo_counts[tipo_label] = Checklist.query.filter_by(tipo=tipo_enum).count()
+
+    feedbacks = Feedback.query.order_by(Feedback.data_envio.asc()).all()
+    feedback_by_month = defaultdict(int)
+    for feedback in feedbacks:
+        month = _month_bucket(feedback.data_envio)
+        if month:
+            feedback_by_month[month] += 1
+
+    enrollments = ProfessorTrilha.query.all()
+    starts_by_month = defaultdict(int)
+    for enrollment in enrollments:
+        month = _month_bucket(enrollment.data_inicio)
+        if month:
+            starts_by_month[month] += 1
+
+    completion_by_trilha_labels = []
+    completion_by_trilha_values = []
+    trilhas = Checklist.query.order_by(Checklist.nome).all()
+    for trilha in trilhas:
+        related_tasks = [task.id for task in trilha.tasks]
+        related_enrollments = ProfessorTrilha.query.filter_by(trilha_id=trilha.id).all()
+        if not related_enrollments or not related_tasks:
+            completion_by_trilha_labels.append(trilha.nome)
+            completion_by_trilha_values.append(0)
+            continue
+
+        percentages = []
+        for enrollment in related_enrollments:
+            completed = ProfessorChecklist.query.filter(
+                ProfessorChecklist.professor_id == enrollment.professor_id,
+                ProfessorChecklist.task_id.in_(related_tasks),
+                ProfessorChecklist.concluido == True,
+            ).count()
+            percentages.append(_safe_percentage(completed, len(related_tasks)))
+
+        completion_by_trilha_labels.append(trilha.nome)
+        completion_by_trilha_values.append(round(sum(percentages) / len(percentages), 1) if percentages else 0)
+
+    all_months = sorted(set(list(feedback_by_month.keys()) + list(starts_by_month.keys())))
+    if len(all_months) > 6:
+        all_months = all_months[-6:]
+
+    feedback_values = [feedback_by_month.get(month, 0) for month in all_months]
+    starts_values = [starts_by_month.get(month, 0) for month in all_months]
+
+    summary = build_dashboard_metrics()
+    insights = [
+        f"Taxa global de conclusão em {summary['conclusao_global_percentual']}%.",
+        f"Tempo médio de conclusão estimado em {summary['tempo_medio_conclusao_dias']} dias.",
+        f"{summary['feedbacks_ultimos_30_dias']} feedbacks coletados nos últimos 30 dias.",
+        f"{summary['ativacoes_ultimos_30_dias']} ativações recentes sinalizam interesse de acesso e continuidade.",
+    ]
+
+    if completion_by_trilha_values:
+        max_index = completion_by_trilha_values.index(max(completion_by_trilha_values))
+        min_index = completion_by_trilha_values.index(min(completion_by_trilha_values))
+        insights.append(
+            f"Maior desempenho em '{completion_by_trilha_labels[max_index]}' com {completion_by_trilha_values[max_index]}% médio de conclusão."
+        )
+        insights.append(
+            f"Oportunidade de melhoria em '{completion_by_trilha_labels[min_index]}' com {completion_by_trilha_values[min_index]}% médio de conclusão."
+        )
+
+    return {
+        'status_distribution': {
+            'labels': list(status_counts.keys()),
+            'values': list(status_counts.values()),
+        },
+        'trilhas_por_tipo': {
+            'labels': list(trilhas_tipo_counts.keys()),
+            'values': list(trilhas_tipo_counts.values()),
+        },
+        'feedback_timeline': {
+            'labels': all_months,
+            'values': feedback_values,
+        },
+        'ativacoes_timeline': {
+            'labels': all_months,
+            'values': starts_values,
+        },
+        'completion_by_trilha': {
+            'labels': completion_by_trilha_labels,
+            'values': completion_by_trilha_values,
+        },
+        'insights': insights,
     }
 
 @admin.route('/')
@@ -53,7 +196,14 @@ def home():
     if current_user.role != RoleEnum.ADMIN:
         return "Acesso negado", 403
 
-    return render_template('admin/admin_dashboard.html', user=current_user, metrics=build_dashboard_metrics())
+    summary = build_dashboard_metrics()
+    analytics_data = build_dashboard_analytics()
+    return render_template(
+        'admin/admin_dashboard.html',
+        user=current_user,
+        summary=summary,
+        analytics=analytics_data,
+    )
 
 
 @admin.route('/analytics')
@@ -65,7 +215,11 @@ def analytics():
     if current_user.role != RoleEnum.ADMIN:
         return jsonify({'error': 'Acesso negado'}), 403
 
-    return jsonify(build_dashboard_metrics())
+    payload = {
+        'summary': build_dashboard_metrics(),
+        'analytics': build_dashboard_analytics(),
+    }
+    return jsonify(payload)
 
 
 @admin.route('/professores', methods=['GET'])

@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block extra_head %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-modern.css') }}">
+{% endblock %}
+
+{% block header %}
+<header class="topbar admin-topbar" role="banner">
+    <div class="topbar-content admin-topbar-content">
+        <div>
+            <span class="eyebrow">Painel de gestão</span>
+            <h1>{{ page_title or 'Administração' }}</h1>
+            <p class="admin-subtitle">{{ page_subtitle or 'Gestão operacional e análise da jornada docente.' }}</p>
+        </div>
+
+        <nav class="topnav admin-topnav" aria-label="Navegação principal do administrador">
+            <a href="{{ url_for('admin.home') }}" class="{{ 'active' if active_page == 'dashboard' else '' }}" {% if active_page == 'dashboard' %}aria-current="page"{% endif %}>Dashboard</a>
+            <a href="{{ url_for('admin.professores') }}" class="{{ 'active' if active_page == 'professores' else '' }}" {% if active_page == 'professores' %}aria-current="page"{% endif %}>Professores</a>
+            <a href="{{ url_for('admin.trilhas_management') }}" class="{{ 'active' if active_page == 'trilhas' else '' }}" {% if active_page == 'trilhas' %}aria-current="page"{% endif %}>Trilhas</a>
+            <a href="{{ url_for('admin.tasks_feedbacks_management') }}" class="{{ 'active' if active_page == 'tarefas' else '' }}" {% if active_page == 'tarefas' %}aria-current="page"{% endif %}>Tarefas & Feedbacks</a>
+            <a href="{{ url_for('auth.logout') }}" class="admin-exit">Sair</a>
+        </nav>
+    </div>
+
+    <div class="admin-journey" aria-label="Modos da jornada administrativa">
+        <span class="journey-pill">Painel Executivo</span>
+        <span class="journey-pill">Operação Diária</span>
+        <span class="journey-pill">Qualidade Pedagógica</span>
+    </div>
+</header>
+{% endblock %}
+
+{% block content %}
+<main id="main-content" tabindex="-1" class="container admin-container">
+    {% block admin_content %}{% endblock %}
+</main>
+{% endblock %}

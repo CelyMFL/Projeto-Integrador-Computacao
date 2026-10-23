@@ -38,7 +38,7 @@ Trilhas:
 
 Admin (telas HTML):
 - GET /admin/ -> admin -> HTML (dashboard)
-- GET /admin/analytics -> admin -> JSON métricas
+- GET /admin/analytics -> admin -> JSON (summary + analytics para gráficos/insights)
 - GET /admin/professores -> admin -> HTML
 - POST /admin/professores -> admin -> cria (form) -> HTML redirect ou JSON 201
 - PUT/PATCH /admin/professores/<id> -> admin -> atualiza (JSON)
@@ -47,5 +47,5 @@ Admin (telas HTML):
 
 Notas:
 - Rotas sob /admin para listagens retornam HTML (padrão do projeto) — use JSON somente em endpoints que explicitamente retornam JSON.
-- Muitos botões na UI são placeholders; foram adicionadas chamadas JS mínimas para criar/editar trilhas, criar tarefas e editar professores usando os endpoints existentes.
-- Em ambiente controlado, os formulários via fetch usam JSON/form-data sem CSRF; em produção é recomendado adicionar proteção.
+- O dashboard administrativo atual usa gráficos e insights calculados no backend a partir de progresso, feedbacks e ativações de trilha.
+- A UI admin utiliza atualização incremental para operações de criação/edição sem exigir recarga total da página em todos os fluxos.

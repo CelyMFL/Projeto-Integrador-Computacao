@@ -250,6 +250,12 @@ Detalhes de payloads e modos de resposta estão em:
 
 - docs/frontend-api-reference.md
 
+Documentação de experiência e evolução:
+
+- docs/design-system.md
+- docs/metrics-glossary.md
+- docs/observability-strategy.md
+
 ## Observações técnicas
 
 - sem migrations automáticas: schema é gerenciado com create_all/drop_all

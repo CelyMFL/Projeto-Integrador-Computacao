@@ -6,9 +6,10 @@
     <title>{% block title %}Sistema{% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/accessibility.css') }}">
+    {% block extra_head %}{% endblock %}
 </head>
 <body>
-
+    {% block header %}
     <header class="topbar" role="banner">
         <nav class="topnav" aria-label="Navegação principal">
             {% if current_user.is_authenticated %}
@@ -24,13 +25,16 @@
             {% endif %}
         </nav>
     </header>
+    {% endblock %}
 
     <hr>
-
+    {% block content %}
     <main id="main-content" tabindex="-1">
-        {% block content %}{% endblock %}
+        {% block page_content %}{% endblock %}
     </main>
+    {% endblock %}
 
     <script src="{{ url_for('static', filename='js/accessibility.js') }}" defer></script>
+    {% block scripts %}{% endblock %}
 </body>
 </html>

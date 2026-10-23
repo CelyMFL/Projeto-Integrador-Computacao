@@ -1,66 +1,90 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin - Dashboard</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/accessibility.css') }}">
-</head>
-<body>
-    <header class="topbar" role="banner">
-        <div class="topbar-content">
-            <h1>Painel Administrativo</h1>
-            <nav class="topnav" aria-label="Navegação principal">
-                <a href="{{ url_for('admin.home') }}" class="active" aria-current="page">Dashboard</a>
-                <a href="{{ url_for('admin.professores') }}">Professores</a>
-                <a href="{{ url_for('admin.trilhas_management') }}">Trilhas</a>
-                <a href="{{ url_for('admin.tasks_feedbacks_management') }}">Tarefas/Feedbacks</a>
-                <a href="{{ url_for('auth.logout') }}" style="color: #ef4444; margin-left: 20px;">Sair</a>
-            </nav>
-        </div>
-    </header>
+{% extends "admin/layout.html" %}
 
-    <main id="main-content" tabindex="-1" class="container">
-        <div class="section-header">
-            <div>
-                <span class="eyebrow">Visão Geral</span>
-                <h2>Métricas do Sistema</h2>
-            </div>
-        </div>
+{% set page_title = "Dashboard Analítico" %}
+{% set page_subtitle = "Leitura executiva da adoção de trilhas, conclusão e evolução da jornada docente." %}
+{% set active_page = "dashboard" %}
 
-        <div class="cards-grid" role="list" aria-label="Métricas do sistema">
-            <div class="card progress-summary" role="listitem">
-                <span class="muted" id="label-total-users">Total Usuários</span>
-                <span class="progress-number" id="total_users" aria-labelledby="label-total-users">{{ metrics.total_users }}</span>
-            </div>
-            <div class="card progress-summary" role="listitem">
-                <span class="muted" id="label-total-prof">Total Professores</span>
-                <span class="progress-number" id="total_professores" aria-labelledby="label-total-prof">{{ metrics.total_professores }}</span>
-            </div>
-            <div class="card progress-summary" role="listitem">
-                <span class="muted" id="label-total-trilhas">Total Trilhas</span>
-                <span class="progress-number" id="total_trilhas" aria-labelledby="label-total-trilhas">{{ metrics.total_trilhas }}</span>
-            </div>
-            <div class="card progress-summary" role="listitem">
-                <span class="muted" id="label-obrigatorias">Obrigatórias</span>
-                <span class="progress-number" id="total_obrigatorias" aria-labelledby="label-obrigatorias">{{ metrics.total_obrigatorias }}</span>
-            </div>
-            <div class="card progress-summary" role="listitem">
-                <span class="muted" id="label-feedbacks">Feedbacks</span>
-                <span class="progress-number" id="total_feedbacks" aria-labelledby="label-feedbacks">{{ metrics.total_feedbacks }}</span>
-            </div>
-            <div class="card progress-summary" role="listitem">
-                <span class="muted" id="label-concluidas">Concluídas</span>
-                <span class="progress-number" id="trilhas_concluidas" aria-labelledby="label-concluidas">{{ metrics.trilhas_concluidas }}</span>
-            </div>
-             <div class="card progress-summary" role="listitem">
-                <span class="muted" id="label-andamento">Em Andamento</span>
-                <span class="progress-number" id="trilhas_em_andamento" aria-labelledby="label-andamento">{{ metrics.trilhas_em_andamento }}</span>
-            </div>
-        </div>
-    </main>
+{% block title %}Admin - Dashboard{% endblock %}
 
-    <script src="{{ url_for('static', filename='js/accessibility.js') }}" defer></script>
-</body>
-</html>
+{% block admin_content %}
+<section aria-labelledby="metricas-heading">
+    <div class="section-header">
+        <div>
+            <span class="eyebrow">Visão Geral</span>
+            <h2 id="metricas-heading">Métricas-Chave</h2>
+        </div>
+    </div>
+
+    <div class="admin-grid-3" role="list" aria-label="Métricas estratégicas">
+        <article class="metric-tile" role="listitem">
+            <h3>Usuários</h3>
+            <strong>{{ summary.total_users }}</strong>
+            <span class="metric-foot">{{ summary.total_professores }} professores ativos na plataforma</span>
+        </article>
+        <article class="metric-tile" role="listitem">
+            <h3>Trilhas</h3>
+            <strong>{{ summary.total_trilhas }}</strong>
+            <span class="metric-foot">{{ summary.total_obrigatorias }} obrigatórias para onboarding</span>
+        </article>
+        <article class="metric-tile" role="listitem">
+            <h3>Feedbacks</h3>
+            <strong>{{ summary.total_feedbacks }}</strong>
+            <span class="metric-foot">{{ summary.feedbacks_ultimos_30_dias }} enviados nos últimos 30 dias</span>
+        </article>
+        <article class="metric-tile" role="listitem">
+            <h3>Conclusão de Trilhas</h3>
+            <strong>{{ summary.conclusao_global_percentual }}%</strong>
+            <span class="metric-foot">{{ summary.trilhas_concluidas }} concluídas e {{ summary.trilhas_em_andamento }} em andamento</span>
+        </article>
+        <article class="metric-tile" role="listitem">
+            <h3>Tempo Médio</h3>
+            <strong>{{ summary.tempo_medio_conclusao_dias }} dias</strong>
+            <span class="metric-foot">Tempo médio para concluir uma trilha iniciada</span>
+        </article>
+        <article class="metric-tile" role="listitem">
+            <h3>Ativações Recentes</h3>
+            <strong>{{ summary.ativacoes_ultimos_30_dias }}</strong>
+            <span class="metric-foot">Inícios de trilha como proxy de acesso/engajamento</span>
+        </article>
+    </div>
+</section>
+
+<section class="admin-grid-2" aria-label="Painéis de análise" style="margin-top: 20px;">
+    <article class="panel">
+        <h3>Distribuição de Status de Jornada</h3>
+        <div class="chart-box"><canvas id="statusChart" aria-label="Gráfico de status" role="img"></canvas></div>
+    </article>
+
+    <article class="panel">
+        <h3>Portfólio de Trilhas por Tipo</h3>
+        <div class="chart-box"><canvas id="tipoChart" aria-label="Gráfico por tipo de trilha" role="img"></canvas></div>
+    </article>
+
+    <article class="panel">
+        <h3>Tendência de Feedbacks</h3>
+        <div class="chart-box"><canvas id="feedbackChart" aria-label="Linha de feedbacks por mês" role="img"></canvas></div>
+    </article>
+
+    <article class="panel">
+        <h3>Conclusão Média por Trilha</h3>
+        <div class="chart-box"><canvas id="completionChart" aria-label="Barras de conclusão por trilha" role="img"></canvas></div>
+    </article>
+</section>
+
+<section class="panel card-highlight" style="margin-top: 20px;" aria-labelledby="insights-heading">
+    <h3 id="insights-heading">Insights Automáticos</h3>
+    <ul id="insight-list" class="insight-list">
+        {% for insight in analytics.insights %}
+        <li>{{ insight }}</li>
+        {% endfor %}
+    </ul>
+</section>
+
+<script id="analytics-data" type="application/json">{{ analytics | tojson }}</script>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js" defer></script>
+<script src="{{ url_for('static', filename='js/admin-dashboard.js') }}" defer></script>
+{% endblock %}
