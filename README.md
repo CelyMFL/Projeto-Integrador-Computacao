@@ -213,6 +213,7 @@ Observação de resposta:
 - GET /admin/trilhas: gestão HTML
 - GET /admin/tarefas-feedbacks: gestão HTML
 - GET /admin/professores/<id>/editar, /admin/trilhas/<id>/editar, /admin/tarefas/<id>/editar: telas de edição em jornada (HTML)
+- GET /admin/professores/novo: cadastro de professor em jornada (HTML)
 - GET /admin/professores/<id>: ficha do professor (HTML)
 - GET/PUT /admin/professores/<id>/trilhas e GET/PUT /admin/trilhas/<id>/professores: atribuição de trilhas (tela HTML e sincronização JSON)
 - GET /admin/trilhas/<id>/conteudo e /admin/trilhas/<id>/tarefas/nova: conteúdo da trilha e criação de tarefa (HTML)

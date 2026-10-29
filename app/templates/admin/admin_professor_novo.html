@@ -1,0 +1,33 @@
+{% extends "admin/editar_base.html" %}
+
+{% set page_title = "Novo Professor" %}
+{% set page_subtitle = "Cadastre o professor em duas etapas: preencher e revisar." %}
+{% set active_page = "professores" %}
+{% set method = "POST" %}
+{% set endpoint = url_for('admin.create_professor') %}
+{% set return_url = url_for('admin.professores') %}
+{% set edit_title = "Dados do novo professor" %}
+{% set save_label = "Cadastrar professor" %}
+
+{% block title %}Admin - Novo professor{% endblock %}
+
+{% block breadcrumb %}
+<li><a href="{{ url_for('admin.professores') }}">Professores</a></li>
+<li aria-current="page">Novo professor</li>
+{% endblock %}
+
+{% block fields %}
+<div class="form-group">
+    <label for="nome">Nome completo</label>
+    <input type="text" id="nome" name="nome" placeholder="Ex: João Silva" data-review-label="Nome" aria-required="true" required>
+</div>
+<div class="form-group">
+    <label for="email">E-mail</label>
+    <input type="email" id="email" name="email" placeholder="email@exemplo.com" data-review-label="E-mail" autocomplete="off" aria-required="true" required>
+</div>
+<div class="form-group">
+    <label for="senha">Senha</label>
+    <input type="password" id="senha" name="senha" data-review-label="Senha" data-review-secret data-secret-text="Definida"
+           autocomplete="new-password" aria-required="true" required>
+</div>
+{% endblock %}

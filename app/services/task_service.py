@@ -1,4 +1,4 @@
-from app.models import Task, Checklist
+from app.models import Task, Checklist, ProfessorChecklist
 from app import db
 
 
@@ -121,6 +121,8 @@ class TaskService:
         
         try:
             checklist_id = task.checklist_id
+            # Completions reference the task through a FK, so they must go first
+            ProfessorChecklist.query.filter_by(task_id=task_id).delete(synchronize_session=False)
             db.session.delete(task)
             
             # Re-order remaining tasks

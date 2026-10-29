@@ -37,7 +37,9 @@
 
   function displayValue(field) {
     if (field.type === 'checkbox') return field.checked ? 'Sim' : 'Não';
-    if (field.hasAttribute('data-review-secret')) return field.value ? 'Será alterada' : 'Mantida';
+    if (field.hasAttribute('data-review-secret')) {
+      return field.value ? (field.getAttribute('data-secret-text') || 'Será alterada') : 'Mantida';
+    }
     return field.value.trim() || '—';
   }
 

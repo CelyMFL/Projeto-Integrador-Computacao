@@ -502,6 +502,14 @@ Permissão:
 Retorno:
 - HTML (admin_tarefas.html)
 
+### GET /admin/professores/novo
+
+Permissão:
+- apenas admin
+
+Retorno:
+- HTML (admin_professor_novo.html): jornada em 2 passos; ao confirmar chama POST /admin/professores (JSON 201) e volta para a lista
+
 ### GET /admin/professores/<user_id>
 
 Permissão:

@@ -266,24 +266,64 @@ def test_criar_tarefa_pelo_endpoint_usado_pela_tela_nova(client, dados):
     assert response.get_json()["ordem"] == 3
 
 
-def test_listas_mostram_status_filtros_e_links(client, dados):
+def test_listas_mostram_links_e_filtro_de_status_das_trilhas(client, dados):
     ProfessorTrilhaService.sync_professor_trilhas(dados["prof"], {dados["a"]: "em_andamento"})
     testHelper.authenticate_user(client, RoleEnum.ADMIN)
 
-    html = client.get("/admin/professores?status=em_andamento").get_data(as_text=True)
-    assert 'data-status="em_andamento"' in html and 'data-status="nao_iniciado"' in html
-    assert '<option value="em_andamento" selected>' in html
+    html = client.get("/admin/professores").get_data(as_text=True)
     assert f'/admin/professores/{dados["prof"]}/trilhas' in html
+    assert "prof-status-filter" not in html and "Não iniciado" not in html
+    assert 'data-professor-name="maria souza"' in html and 'data-professor-email="maria@teste.com"' in html
+    assert "/admin/professores/novo" in html and "create-professor-form" not in html
 
-    html = client.get("/admin/trilhas").get_data(as_text=True)
+    html = client.get("/admin/trilhas?status=em_andamento").get_data(as_text=True)
     assert 'data-count-em_andamento="1"' in html
+    assert '<option value="em_andamento" selected>' in html
     assert f'/admin/trilhas/{dados["a"]}/conteudo' in html and f'/admin/trilhas/{dados["a"]}/professores' in html
 
     html = client.get("/admin/tarefas-feedbacks").get_data(as_text=True)
     assert "add-task-form" not in html and f'/admin/trilhas/{dados["a"]}/conteudo' in html
 
 
-def test_status_filter_invalido_e_ignorado(client, dados):
+def test_status_invalido_na_lista_de_trilhas_e_ignorado(client, dados):
     testHelper.authenticate_user(client, RoleEnum.ADMIN)
-    html = client.get("/admin/professores?status=<script>").get_data(as_text=True)
+    html = client.get("/admin/trilhas?status=<script>").get_data(as_text=True)
     assert "<script>" not in html.split("<main", 1)[1].split("</main>", 1)[0]
+
+
+def test_pagina_de_cadastro_de_professor(client, dados):
+    testHelper.authenticate_user(client, RoleEnum.ADMIN)
+    html = client.get("/admin/professores/novo").get_data(as_text=True)
+    assert 'data-method="POST"' in html and 'data-endpoint="/admin/professores"' in html
+    for campo in ('name="nome"', 'name="email"', 'name="senha"'):
+        assert campo in html
+
+
+def test_cadastro_de_professor_pelo_endpoint_usado_pela_tela(client, dados):
+    testHelper.authenticate_user(client, RoleEnum.ADMIN)
+    response = client.post(
+        "/admin/professores",
+        json={"nome": "Carla Dias", "email": "Carla@Teste.com", "senha": "segredo"},
+        headers={"X-CSRFToken": get_csrf_token(client), "Accept": "application/json"},
+    )
+    assert response.status_code == 201
+    novo = User.query.filter_by(email="carla@teste.com").one()
+    assert novo.role == RoleEnum.PROFESSOR and novo.senha != "segredo"
+
+
+def test_pagina_de_cadastro_exige_admin(client, dados):
+    testHelper.authenticate_user(client, RoleEnum.PROFESSOR)
+    assert client.get("/admin/professores/novo").status_code == 403
+
+
+def test_excluir_tarefa_com_conclusoes_de_professores(client, dados):
+    ProfessorTrilhaService.sync_professor_trilhas(dados["prof"], {dados["a"]: "nao_iniciado"})
+    tarefa = dados["tarefas_a"][0]
+    ProfessorChecklistService.mark_task_complete(dados["prof"], tarefa)
+    testHelper.authenticate_user(client, RoleEnum.ADMIN)
+
+    response = client.delete(f"/tasks/{tarefa}", headers={"X-CSRFToken": get_csrf_token(client)})
+
+    assert response.status_code == 200
+    assert ProfessorChecklist.query.filter_by(task_id=tarefa).count() == 0
+    assert [t.ordem for t in TaskService.list_tasks_by_trilha(dados["a"])] == [1]

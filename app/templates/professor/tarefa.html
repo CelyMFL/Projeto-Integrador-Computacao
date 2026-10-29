@@ -52,15 +52,26 @@
         </li>
         {% endif %}
         {% if task.link_apoio %}
+        {% set link_externo = task.link_apoio | external_url %}
         <li>
-          <a href="{{ task.link_apoio }}" target="_blank" rel="noopener noreferrer"
+          {% if link_externo %}
+          <a href="{{ link_externo }}" target="_blank" rel="noopener noreferrer"
              aria-label="Acessar link externo de apoio (abre em nova aba)">Acessar link externo</a>
+          {% else %}
+          <span>{{ task.link_apoio }}</span>
+          {% endif %}
           <span>Link de apoio</span>
         </li>
         {% endif %}
         {% if task.documento_apoio %}
+        {% set documento_url = (task.documento_apoio | pdf_src) or (task.documento_apoio | external_url) %}
         <li>
-          <a href="{{ task.documento_apoio | pdf_src or '#' }}" aria-label="Abrir documento de apoio: {{ task.documento_apoio }}">{{ task.documento_apoio }}</a>
+          {% if documento_url %}
+          <a href="{{ documento_url }}" target="_blank" rel="noopener noreferrer"
+             aria-label="Abrir documento de apoio em nova aba: {{ task.documento_apoio }}">{{ task.documento_apoio }}</a>
+          {% else %}
+          <span>{{ task.documento_apoio }}</span>
+          {% endif %}
           <span>Documento de apoio</span>
         </li>
         {% endif %}

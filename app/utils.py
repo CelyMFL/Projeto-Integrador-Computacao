@@ -34,6 +34,20 @@ def titulo_ptbr(texto):
     return " ".join(palavras)
 
 
+def external_url(valor):
+    """Devolve o link se for uma URL http(s) completa; caso contrário, None.
+
+    Evita que esquemas como javascript: ou data: virem um href clicável.
+    """
+    if not valor:
+        return None
+    valor = valor.strip()
+    parsed = urlparse(valor)
+    if parsed.scheme in ("http", "https") and parsed.netloc:
+        return valor
+    return None
+
+
 def youtube_embed(url):
     """Converte um link comum do YouTube em URL de embed.
 

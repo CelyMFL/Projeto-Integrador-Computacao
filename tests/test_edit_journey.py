@@ -102,5 +102,5 @@ def test_listas_apontam_para_as_telas_de_edicao(client, dados):
 def test_lista_de_professores_tem_campo_de_busca_parcial(client, dados):
     testHelper.authenticate_user(client, RoleEnum.ADMIN)
     html = client.get("/admin/professores").get_data(as_text=True)
-    assert 'data-professor-search="maria souza maria@teste.com"' in html
+    assert 'data-professor-name="maria souza"' in html
     assert 'id="prof-no-results"' in html

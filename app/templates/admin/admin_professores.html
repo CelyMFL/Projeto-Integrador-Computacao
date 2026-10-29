@@ -7,78 +7,45 @@
 {% block title %}Admin - Professores{% endblock %}
 
 {% block admin_content %}
-<div class="dashboard-grid">
-    <section aria-labelledby="lista-professores-heading">
-        <div class="section-header inline-stack">
-            <h2 id="lista-professores-heading">Lista de Professores</h2>
-            <div class="list-filters">
-                <label for="prof-status-filter" class="a11y-visually-hidden">Filtrar por status</label>
-                <select id="prof-status-filter" class="quick-filter" data-initial="{{ status_filter }}">
-                    <option value="">Todos os status</option>
-                    {% for value, label in status_labels.items() %}
-                    <option value="{{ value }}" {{ 'selected' if value == status_filter else '' }}>{{ label }}</option>
-                    {% endfor %}
-                </select>
-                <input type="search" class="quick-filter" id="prof-search" placeholder="Buscar por nome ou e-mail" aria-label="Filtrar professores" autocomplete="off">
+<section aria-labelledby="lista-professores-heading">
+    <div class="section-header inline-stack">
+        <h2 id="lista-professores-heading">Lista de Professores</h2>
+        <div class="list-filters">
+            <input type="search" class="quick-filter" id="prof-search" placeholder="Buscar por nome" aria-label="Buscar professor por parte do nome" autocomplete="off">
+            <a class="button" href="{{ url_for('admin.new_professor_page') }}">+ Novo professor</a>
+        </div>
+    </div>
+
+    <div class="task-list" role="list" aria-label="Professores cadastrados" id="professores-list">
+        {% for prof in professores %}
+        <div class="card task-card prof-card {{ 'done' if prof.andamento.percentual == 100 else 'pending' }}" role="listitem" id="prof-card-{{ prof.id }}"
+             data-professor-name="{{ prof.nome|lower }}" data-professor-email="{{ prof.email|lower }}">
+            <div class="prof-info">
+                <strong><a href="{{ url_for('admin.professor_detail', user_id=prof.id) }}">{{ prof.nome }}</a></strong>
+                <p>{{ prof.email }}</p>
+                <a class="tag" href="{{ url_for('admin.professor_trilhas_page', user_id=prof.id) }}">{{ prof.trilhas_atribuidas|length }} Trilhas Atribuídas</a>
+            </div>
+            <div class="user-box">
+                <span id="andamento-label-{{ prof.id }}">Andamento Geral</span>
+                <strong aria-labelledby="andamento-label-{{ prof.id }}">{{ prof.andamento.percentual|int }}%</strong>
+            </div>
+            <div class="prof-actions">
+                <a class="button ghost" href="{{ url_for('admin.edit_professor_page', user_id=prof.id) }}"
+                   aria-label="Editar professor {{ prof.nome }}">Editar</a>
+                <a class="button ghost" href="{{ url_for('admin.professor_trilhas_page', user_id=prof.id) }}"
+                   aria-label="Atribuir trilhas a {{ prof.nome }}">Trilhas</a>
             </div>
         </div>
-
-        <div class="task-list" role="list" aria-label="Professores cadastrados" id="professores-list">
-            {% for prof in professores %}
-            <div class="card task-card prof-card {{ 'done' if prof.andamento.percentual == 100 else 'pending' }}" role="listitem" id="prof-card-{{ prof.id }}" data-professor-search="{{ (prof.nome ~ ' ' ~ prof.email)|lower }}" data-status="{{ prof.status }}">
-                <div class="prof-info">
-                    <strong><a href="{{ url_for('admin.professor_detail', user_id=prof.id) }}">{{ prof.nome }}</a></strong>
-                    <p>{{ prof.email }}</p>
-                    <a class="tag" href="{{ url_for('admin.professor_trilhas_page', user_id=prof.id) }}">{{ prof.trilhas_atribuidas|length }} Trilhas Atribuídas</a>
-                    <span class="tag">{{ status_labels[prof.status] }}</span>
-                </div>
-                <div class="user-box">
-                    <span id="andamento-label-{{ prof.id }}">Andamento Geral</span>
-                    <strong aria-labelledby="andamento-label-{{ prof.id }}">{{ prof.andamento.percentual|int }}%</strong>
-                </div>
-                <div class="prof-actions">
-                    <a class="button ghost" href="{{ url_for('admin.edit_professor_page', user_id=prof.id) }}"
-                       aria-label="Editar professor {{ prof.nome }}">Editar</a>
-                    <a class="button ghost" href="{{ url_for('admin.professor_trilhas_page', user_id=prof.id) }}"
-                       aria-label="Atribuir trilhas a {{ prof.nome }}">Trilhas</a>
-                </div>
-            </div>
-            {% endfor %}
-            <p id="prof-no-results" class="admin-empty" hidden>Nenhum professor encontrado para a busca.</p>
-            {% if not professores %}
-            <p class="admin-empty">Nenhum professor cadastrado ainda.</p>
-            {% endif %}
-        </div>
-    </section>
-
-    <aside aria-labelledby="novo-professor-heading">
-        <div class="card card-highlight">
-            <h3 id="novo-professor-heading">Novo Professor</h3>
-            <form id="create-professor-form" class="feedback-form" action="{{ url_for('admin.create_professor') }}" method="POST" novalidate>
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <div class="form-group">
-                    <label for="nome">Nome Completo</label>
-                    <input type="text" id="nome" name="nome" placeholder="Ex: João Silva" aria-required="true" required>
-                </div>
-                <div class="form-group">
-                    <label for="email">E-mail</label>
-                    <input type="email" id="email" name="email" placeholder="email@exemplo.com" autocomplete="email" aria-required="true" required>
-                </div>
-                <div class="form-group">
-                    <label for="senha">Senha</label>
-                    <input type="password" id="senha" name="senha" placeholder="********" autocomplete="new-password" aria-required="true" required>
-                </div>
-                <button type="submit" class="button">Salvar Professor</button>
-            </form>
-        </div>
-    </aside>
-</div>
+        {% endfor %}
+        <p id="prof-no-results" class="admin-empty" hidden>Nenhum professor encontrado para a busca.</p>
+        {% if not professores %}
+        <p class="admin-empty">Nenhum professor cadastrado ainda.</p>
+        {% endif %}
+    </div>
+</section>
 {% endblock %}
 
 {% block scripts %}
 {{ super() }}
-<script>
-window.__adminCsrfToken = {{ csrf_token()|tojson }};
-</script>
 <script src="{{ url_for('static', filename='js/admin-professores.js') }}" defer></script>
 {% endblock %}

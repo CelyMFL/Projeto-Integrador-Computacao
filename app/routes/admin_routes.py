@@ -30,17 +30,6 @@ def inject_status_labels():
     return {'status_labels': STATUS_LABELS}
 
 
-def _overall_status(enrollments):
-    """Resume o status geral de um professor a partir das suas trilhas."""
-    if not enrollments:
-        return StatusEnum.NAO_INICIADO.value
-    if all(item.status == StatusEnum.CONCLUIDO for item in enrollments):
-        return StatusEnum.CONCLUIDO.value
-    if any(item.status != StatusEnum.NAO_INICIADO for item in enrollments):
-        return StatusEnum.EM_ANDAMENTO.value
-    return StatusEnum.NAO_INICIADO.value
-
-
 def _professor_or_404(user_id):
     professor = User.query.get(user_id)
     if not professor or professor.role != RoleEnum.PROFESSOR:
@@ -351,13 +340,10 @@ def professores():
                     ProfessorChecklist.concluido == True,
                 ).count()
 
-        status = _overall_status(enrollments)
-
         payload.append({
             'id': professor.id,
             'nome': professor.nome,
             'email': professor.email,
-            'status': status,
             'trilhas_atribuidas': [{'id': trilha.id, 'nome': trilha.nome} for trilha in trilhas],
             'andamento': {
                 'total_tarefas': total_tasks,
@@ -366,16 +352,7 @@ def professores():
             },
         })
 
-    status_filter = request.args.get('status')
-    if status_filter not in STATUS_LABELS:
-        status_filter = ''
-
-    return render_template(
-        'admin/admin_professores.html',
-        user=current_user,
-        professores=payload,
-        status_filter=status_filter,
-    )
+    return render_template('admin/admin_professores.html', user=current_user, professores=payload)
 
 
 @admin.route('/professores', methods=['POST'])
@@ -404,6 +381,16 @@ def create_professor():
         return redirect(url_for('admin.professores'))
 
     return jsonify({'id': user.id, 'nome': user.nome, 'email': user.email, 'role': user.role.value}), 201
+
+
+@admin.route('/professores/novo', methods=['GET'])
+@login_required
+def new_professor_page():
+    """Exibe a tela de cadastro (jornada em passos) de um novo professor."""
+    if current_user.role != RoleEnum.ADMIN:
+        return jsonify({'error': 'Acesso negado'}), 403
+
+    return render_template('admin/admin_professor_novo.html', user=current_user)
 
 
 @admin.route('/professores/<int:user_id>', methods=['GET'])

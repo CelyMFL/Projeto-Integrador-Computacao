@@ -30,6 +30,7 @@ ADMIN_ROUTES = [
     ("PUT", "/admin/professores/{a}"),
     ("PATCH", "/admin/professores/{a}"),
     ("GET", "/admin/professores/{a}/editar"),
+    ("GET", "/admin/professores/novo"),
     ("GET", "/admin/professores/{a}"),
     ("GET", "/admin/professores/{a}/trilhas"),
     ("PUT", "/admin/professores/{a}/trilhas"),
