@@ -497,7 +497,7 @@ def new_task_page(trilha_id):
         return jsonify({'error': 'Acesso negado'}), 403
 
     trilha = _trilha_or_404(trilha_id)
-    return render_template('admin/admin_tarefa_nova.html', user=current_user, trilha=trilha)
+    return render_template('admin/admin_tarefa_nova.html', user=current_user, trilha=trilha, total=len(trilha.tasks) + 1)
 
 
 @admin.route('/professores/<int:user_id>/editar', methods=['GET'])
@@ -544,7 +544,15 @@ def edit_task_page(task_id):
     if not task:
         abort(404)
 
-    return render_template('admin/admin_tarefa_editar.html', user=current_user, task=task, trilha=task.checklist)
+    ordered_ids = [item.id for item in sorted(task.checklist.tasks, key=lambda item: (item.ordem, item.id))]
+    return render_template(
+        'admin/admin_tarefa_editar.html',
+        user=current_user,
+        task=task,
+        trilha=task.checklist,
+        posicao=ordered_ids.index(task.id) + 1,
+        total=len(ordered_ids),
+    )
 
 
 @admin.route('/professores/<int:user_id>', methods=['PUT', 'PATCH'])

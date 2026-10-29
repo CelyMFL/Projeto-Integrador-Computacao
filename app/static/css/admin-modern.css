@@ -69,14 +69,6 @@ body {
   color: var(--admin-danger);
 }
 
-.admin-journey {
-  max-width: 1120px;
-  margin: 14px auto 0;
-  padding: 0 24px 20px;
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-}
 
 .journey-pill {
   background: #f1ebe1;

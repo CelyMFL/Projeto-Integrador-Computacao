@@ -234,7 +234,7 @@ Observação de resposta:
 - status da atribuição: `nao_iniciado` (atribuída pelo admin) vira `em_andamento` quando o professor inicia a trilha ou conclui a primeira tarefa; `concluido` é automático ao terminar todas as tarefas; o admin pode reabrir uma trilha concluída
 - remover uma trilha de um professor (tela de atribuição) apaga as tarefas concluídas dele nessa trilha
 - nomes de trilha são gravados com iniciais maiúsculas (preposições em minúsculas, siglas preservadas)
-- ordenação de tarefas usa campo ordem e endpoint dedicado de reorder
+- `ordem` da tarefa é a posição dentro da trilha (1..N); criar ou editar com uma posição renumera as demais sem buracos ou duplicatas, e há endpoint dedicado de reorder
 - ao remover uma trilha, o serviço também remove feedbacks, vínculos de professor e conclusões de tarefas associados para evitar falhas de integridade
 
 ## Validação realizada

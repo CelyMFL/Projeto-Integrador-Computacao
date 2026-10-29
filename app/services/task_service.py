@@ -6,6 +6,24 @@ class TaskService:
     """Service for task management."""
 
     @staticmethod
+    def _place_task(task, position=None):
+        """
+        Put a task at a position of its trilha and renumber every task from 1..N.
+
+        position is clamped to 1..N; None means the end. Gaps and duplicates in
+        the stored ordem values are fixed as a side effect. Does not commit.
+        """
+        siblings = Task.query.filter(
+            Task.checklist_id == task.checklist_id,
+            Task.id != task.id,
+        ).order_by(Task.ordem, Task.id).all()
+
+        index = len(siblings) if position is None else max(1, min(position, len(siblings) + 1)) - 1
+        siblings.insert(index, task)
+        for number, item in enumerate(siblings, 1):
+            item.ordem = number
+
+    @staticmethod
     def create_task(checklist_id, descricao, ordem=None, material_apoio=None, link_apoio=None, documento_apoio=None):
         """
         Create a new task in a trilha.
@@ -13,7 +31,7 @@ class TaskService:
         Args:
             checklist_id: Trilha (Checklist) ID
             descricao: Task description
-            ordem: Task order (optional, auto-incremented if not provided)
+            ordem: Position in the trilha (optional; goes to the end if not provided)
             material_apoio: Optional support material description
             link_apoio: Optional support URL
             documento_apoio: Optional support document identifier
@@ -29,13 +47,6 @@ class TaskService:
         if not trilha:
             raise ValueError(f"Trilha with ID {checklist_id} not found")
         
-        # Auto-increment ordem if not provided
-        if ordem is None:
-            max_ordem = db.session.query(db.func.max(Task.ordem)).filter_by(
-                checklist_id=checklist_id
-            ).scalar() or 0
-            ordem = max_ordem + 1
-        
         try:
             task = Task(
                 descricao=descricao.strip(),
@@ -46,6 +57,8 @@ class TaskService:
                 documento_apoio=documento_apoio.strip() if documento_apoio else None,
             )
             db.session.add(task)
+            db.session.flush()
+            TaskService._place_task(task, ordem if ordem else None)
             db.session.commit()
             return task
         except Exception as e:
@@ -74,7 +87,7 @@ class TaskService:
         Args:
             task_id: Task ID
             descricao: New description (optional)
-            ordem: New order (optional)
+            ordem: New position in the trilha (optional); other tasks are renumbered
             material_apoio: New support material (optional)
             link_apoio: New support URL (optional)
             documento_apoio: New support document identifier (optional)
@@ -94,7 +107,7 @@ class TaskService:
         if ordem is not None:
             if not isinstance(ordem, int) or ordem < 1:
                 raise ValueError("Ordem must be a positive integer")
-            task.ordem = ordem
+            TaskService._place_task(task, ordem)
 
         if material_apoio is not None:
             task.material_apoio = material_apoio.strip() if material_apoio else None

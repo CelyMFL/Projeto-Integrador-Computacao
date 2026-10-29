@@ -44,14 +44,21 @@ a {
   align-items: center;
 }
 
+.topbar-content > div:first-child {
+  flex: 1 1 260px;
+  min-width: 0;
+}
+
 .topnav {
   display: flex;
   gap: 10px;
-  flex-wrap: wrap;
+  flex: 0 0 auto;
+  flex-wrap: nowrap;
   justify-content: center;
 }
 
 .topnav a {
+  white-space: nowrap;
   text-decoration: none;
   color: var(--primary);
   border: 1px solid #bfdbfe;
@@ -154,6 +161,19 @@ p {
   display: block;
   color: var(--text);
   margin-top: 2px;
+}
+
+/* Nome longo no cabeçalho: caixa de largura limitada e nome cortado com reticências */
+.topbar-content .user-box {
+  flex: 0 1 200px;
+  min-width: 0;
+  max-width: 220px;
+}
+
+.topbar-content .user-box strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .progress-summary {
@@ -525,7 +545,13 @@ textarea {
   }
 
   .topnav {
+    flex-wrap: wrap;
     justify-content: flex-start;
+  }
+
+  .topbar-content .user-box {
+    flex: none;
+    max-width: 100%;
   }
 }
 

@@ -21,7 +21,7 @@
 
       <div class="user-box">
         <span>Professor(a)</span>
-        <strong>{{ data.user.nome if data else current_user.nome }}</strong>
+        <strong title="{{ data.user.nome if data else current_user.nome }}">{{ data.user.nome if data else current_user.nome }}</strong>
       </div>
     </div>
   </header>

@@ -254,6 +254,7 @@ Permissão:
 Entrada:
 - JSON ou form-data
 - campos opcionais: descricao, ordem, material_apoio, link_apoio, documento_apoio
+- ordem é a posição na trilha (1..N): a tarefa entra nessa posição, valores acima de N vão para o fim e as demais são renumeradas sem buracos
 
 Retorno:
 - JSON da tarefa atualizada
@@ -390,7 +391,7 @@ Permissão:
 Entrada:
 - JSON ou form-data
 - descricao (obrigatório)
-- ordem (opcional)
+- ordem (opcional): posição na trilha; vazio coloca no final e as demais são renumeradas
 - material_apoio, link_apoio, documento_apoio (opcionais)
 
 Retorno:

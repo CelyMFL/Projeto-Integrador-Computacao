@@ -23,9 +23,9 @@
     <input type="text" id="descricao" name="descricao" data-review-label="Descrição" aria-required="true" required>
 </div>
 <div class="form-group">
-    <label for="ordem">Ordem</label>
-    <input type="number" id="ordem" name="ordem" min="1" data-review-label="Ordem" data-type="int" aria-describedby="ordem-hint">
-    <span id="ordem-hint" class="form-hint">Deixe vazio para colocar no final da trilha.</span>
+    <label for="ordem">Posição na trilha</label>
+    <input type="number" id="ordem" name="ordem" min="1" max="{{ total }}" data-review-label="Posição" data-type="int" aria-describedby="ordem-hint">
+    <span id="ordem-hint" class="form-hint">De 1 a {{ total }}. Deixe vazio para colocar no final; as outras tarefas são reorganizadas automaticamente.</span>
 </div>
 <div class="form-group">
     <label for="material_apoio">Material de apoio</label>
