@@ -1,5 +1,6 @@
 from app.models import Checklist, TipoEnum, Task, ProfessorTrilha, ProfessorChecklist, Feedback
 from app import db
+from app.utils import titulo_ptbr
 
 
 class TrilhaService:
@@ -31,7 +32,7 @@ class TrilhaService:
         
         try:
             trilha = Checklist(
-                nome=nome.strip(),
+                nome=titulo_ptbr(nome.strip()),
                 descricao=descricao.strip() if descricao else "",
                 tipo=tipo,
                 obrigatoria=obrigatoria
@@ -88,7 +89,7 @@ class TrilhaService:
         if nome is not None:
             if not nome or not nome.strip():
                 raise ValueError("Nome cannot be empty")
-            trilha.nome = nome.strip()
+            trilha.nome = titulo_ptbr(nome.strip())
         
         if descricao is not None:
             trilha.descricao = descricao.strip() if descricao else ""

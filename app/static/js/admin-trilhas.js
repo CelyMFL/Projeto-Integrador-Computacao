@@ -36,6 +36,29 @@
     });
   }
 
+  // Filtro: mostra só trilhas que têm professores no status escolhido.
+  var statusFilter = document.getElementById('trilha-status-filter');
+  var noResults = document.getElementById('trilha-no-results');
+
+  function filterTrilhas(shouldAnnounce) {
+    var status = statusFilter.value;
+    var visible = 0;
+    document.querySelectorAll('#trilhas-grid .trail-card').forEach(function (card) {
+      var show = !status || parseInt(card.getAttribute('data-count-' + status), 10) > 0;
+      card.style.display = show ? '' : 'none';
+      if (show) visible += 1;
+    });
+    if (noResults) noResults.hidden = visible > 0 || !status;
+    if (shouldAnnounce && status) {
+      announce(visible + (visible === 1 ? ' trilha encontrada.' : ' trilhas encontradas.'));
+    }
+  }
+
+  if (statusFilter) {
+    statusFilter.addEventListener('change', function () { filterTrilhas(true); });
+    if (statusFilter.value) filterTrilhas(false);
+  }
+
   var cancel = document.getElementById('create-trilha-cancel');
   if (cancel) {
     cancel.addEventListener('click', function () {
@@ -43,33 +66,60 @@
     });
   }
 
+  function element(tag, className, text) {
+    var node = document.createElement(tag);
+    if (className) node.className = className;
+    if (text !== undefined) node.textContent = text;
+    return node;
+  }
+
   function buildCard(trilha) {
-    var card = document.createElement('article');
-    card.className = 'card trail-card';
+    var card = element('article', 'card trail-card');
     card.id = 'trilha-card-' + trilha.id;
     card.setAttribute('role', 'listitem');
+    ['nao_iniciado', 'em_andamento', 'concluido'].forEach(function (status) {
+      card.setAttribute('data-count-' + status, '0');
+    });
 
-    var badge = trilha.obrigatoria
-      ? '<span class="required">Obrigatoria</span>'
-      : '<span class="optional">Opcional</span>';
+    var header = element('div', 'card-header');
+    header.appendChild(trilha.obrigatoria
+      ? element('span', 'required', 'Obrigatória')
+      : element('span', 'optional', 'Opcional'));
+    if (trilha.tipo) header.appendChild(element('span', 'tag', trilha.tipo));
 
-    var tipo = trilha.tipo ? '<span class="tag">' + trilha.tipo + '</span>' : '';
+    var title = element('h3', '', trilha.nome);
+    title.id = 'trilha-nome-' + trilha.id;
+    var desc = element('p', '', trilha.descricao || '');
+    desc.id = 'trilha-desc-' + trilha.id;
 
-    card.innerHTML =
-      '<div class="card-header">' + badge + tipo + '</div>' +
-      '<h3 id="trilha-nome-' + trilha.id + '">' + trilha.nome + '</h3>' +
-      '<p id="trilha-desc-' + trilha.id + '">' + (trilha.descricao || '') + '</p>' +
-      '<div class="card-footer"><span>' + (trilha.tasks ? trilha.tasks.length : 0) + ' Tarefas</span>' +
-      '<div class="actions">' +
-      '<button onclick="openEditTrilha(' + trilha.id + ')" class="button ghost" aria-expanded="false" aria-controls="edit-trilha-' + trilha.id + '">Editar</button>' +
-      '<button onclick="deleteTrilha(' + trilha.id + ')" class="button ghost" aria-label="Excluir trilha">Excluir</button>' +
-      '</div></div>' +
-      '<div id="edit-trilha-' + trilha.id + '" class="card" style="display:none; margin-top:10px;" role="group" aria-label="Editar trilha">' +
-      '<div class="form-group"><label for="edit-nome-' + trilha.id + '">Nome</label><input type="text" id="edit-nome-' + trilha.id + '" value="' + trilha.nome + '" /></div>' +
-      '<div class="form-group"><label for="edit-desc-' + trilha.id + '">Descricao</label><input type="text" id="edit-desc-' + trilha.id + '" value="' + (trilha.descricao || '') + '" /></div>' +
-      '<div class="actions"><button type="button" class="button" onclick="submitEditTrilha(' + trilha.id + ')">Salvar</button><button type="button" class="button secondary" onclick="closeEditTrilha(' + trilha.id + ')">Cancelar</button></div>' +
-      '</div>';
+    var footer = element('div', 'card-footer');
+    footer.appendChild(element('span', '', (trilha.tasks ? trilha.tasks.length : 0) + ' Tarefas'));
+    var actions = element('div', 'actions');
 
+    var content = element('a', 'button ghost', 'Conteúdo');
+    content.href = '/admin/trilhas/' + trilha.id + '/conteudo';
+    content.setAttribute('aria-label', 'Conteúdo da trilha ' + trilha.nome);
+    var professors = element('a', 'button ghost', 'Professores');
+    professors.href = '/admin/trilhas/' + trilha.id + '/professores';
+    professors.setAttribute('aria-label', 'Professores da trilha ' + trilha.nome);
+    var edit = element('a', 'button ghost', 'Editar');
+    edit.href = '/admin/trilhas/' + trilha.id + '/editar';
+    edit.setAttribute('aria-label', 'Editar trilha ' + trilha.nome);
+    var del = element('button', 'button ghost', 'Excluir');
+    del.type = 'button';
+    del.setAttribute('aria-label', 'Excluir trilha ' + trilha.nome);
+    del.addEventListener('click', function () { window.deleteTrilha(trilha.id); });
+
+    actions.appendChild(content);
+    actions.appendChild(professors);
+    actions.appendChild(edit);
+    actions.appendChild(del);
+    footer.appendChild(actions);
+
+    card.appendChild(header);
+    card.appendChild(title);
+    card.appendChild(desc);
+    card.appendChild(footer);
     return card;
   }
 
@@ -105,49 +155,6 @@
       });
     });
   }
-
-  window.openEditTrilha = function (id) {
-    var panel = document.getElementById('edit-trilha-' + id);
-    if (!panel) return;
-    panel.style.display = 'block';
-    var first = panel.querySelector('input');
-    if (first) first.focus();
-  };
-
-  window.closeEditTrilha = function (id) {
-    var panel = document.getElementById('edit-trilha-' + id);
-    if (panel) panel.style.display = 'none';
-  };
-
-  window.submitEditTrilha = function (id) {
-    var nome = document.getElementById('edit-nome-' + id).value;
-    var descricao = document.getElementById('edit-desc-' + id).value;
-
-    if (!confirmAction('Confirma salvar as alteracoes desta trilha?')) return;
-
-    fetch('/trilhas/' + id, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-CSRFToken': window.__adminCsrfToken,
-      },
-      body: JSON.stringify({ nome: nome, descricao: descricao }),
-    }).then(async function (res) {
-      var body = await res.json().catch(function () { return {}; });
-      if (!res.ok) {
-        announce('Erro ao atualizar trilha: ' + (body.error || res.status), true);
-        return;
-      }
-
-      var nomeNode = document.getElementById('trilha-nome-' + id);
-      var descNode = document.getElementById('trilha-desc-' + id);
-      if (nomeNode) nomeNode.textContent = body.nome;
-      if (descNode) descNode.textContent = body.descricao || '';
-
-      announce('Trilha atualizada com sucesso.');
-      window.closeEditTrilha(id);
-    });
-  };
 
   window.deleteTrilha = function (id) {
     if (!confirmAction('Tem certeza que deseja excluir esta trilha?')) return;

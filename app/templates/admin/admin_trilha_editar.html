@@ -1,0 +1,38 @@
+{% extends "admin/editar_base.html" %}
+
+{% set page_title = "Editar Trilha" %}
+{% set page_subtitle = "Atualize a trilha em duas etapas: preencher e revisar." %}
+{% set active_page = "trilhas" %}
+{% set endpoint = url_for('trilhas.update_trilha', trilha_id=trilha.id) %}
+{% set return_url = url_for('admin.trilhas_management') %}
+{% set edit_title = trilha.nome %}
+
+{% block title %}Admin - Editar trilha{% endblock %}
+
+{% block breadcrumb %}
+<li><a href="{{ url_for('admin.trilhas_management') }}">Trilhas</a></li>
+<li aria-current="page">{{ trilha.nome }}</li>
+{% endblock %}
+
+{% block fields %}
+<div class="form-group">
+    <label for="nome">Nome</label>
+    <input type="text" id="nome" name="nome" value="{{ trilha.nome }}" data-review-label="Nome" aria-required="true" required>
+    <span class="form-hint">O nome é salvo com iniciais maiúsculas.</span>
+</div>
+<div class="form-group">
+    <label for="descricao">Descrição</label>
+    <input type="text" id="descricao" name="descricao" value="{{ trilha.descricao or '' }}" data-review-label="Descrição">
+</div>
+<div class="form-group">
+    <label for="tipo">Tipo</label>
+    <select id="tipo" name="tipo" data-review-label="Tipo">
+        {% for tipo in tipos %}
+        <option value="{{ tipo }}" {{ 'selected' if trilha.tipo and trilha.tipo.value == tipo else '' }}>{{ tipo }}</option>
+        {% endfor %}
+    </select>
+</div>
+<div class="form-group">
+    <label><input type="checkbox" id="obrigatoria" name="obrigatoria" data-review-label="Obrigatória" {{ 'checked' if trilha.obrigatoria else '' }}> Obrigatória</label>
+</div>
+{% endblock %}

@@ -1,0 +1,26 @@
+{% macro assign_row(item, label, sublabel, tags) %}
+<li class="assign-row" data-id="{{ item.id }}" data-label="{{ label }}"
+    data-search="{{ (label ~ ' ' ~ sublabel)|lower }}"
+    data-initial-checked="{{ 'true' if item.atribuida else 'false' }}"
+    data-initial-status="{{ item.status or '' }}"
+    data-concluidas="{{ item.concluidas }}">
+    <div class="assign-main">
+        <input type="checkbox" id="assign-check-{{ item.id }}" class="assign-check" {{ 'checked' if item.atribuida else '' }}>
+        <label for="assign-check-{{ item.id }}">
+            <strong>{{ label }}</strong>
+            <span class="form-hint">{{ sublabel }}</span>
+        </label>
+    </div>
+    <div class="assign-tags">
+        {% for tag in tags %}<span class="tag">{{ tag }}</span>{% endfor %}
+    </div>
+    <div class="assign-status">
+        <label for="assign-status-{{ item.id }}" class="a11y-visually-hidden">Status de {{ label }}</label>
+        <select id="assign-status-{{ item.id }}" class="assign-status-select" {{ '' if item.atribuida else 'disabled' }}>
+            <option value="nao_iniciado" {{ 'selected' if item.status in (None, 'nao_iniciado') else '' }}>Não iniciado</option>
+            <option value="em_andamento" {{ 'selected' if item.status == 'em_andamento' else '' }}>Em andamento</option>
+            {% if item.status == 'concluido' %}<option value="concluido" selected>Concluído</option>{% endif %}
+        </select>
+    </div>
+</li>
+{% endmacro %}

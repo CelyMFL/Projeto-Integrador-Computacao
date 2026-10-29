@@ -11,51 +11,40 @@
     <section aria-labelledby="lista-professores-heading">
         <div class="section-header inline-stack">
             <h2 id="lista-professores-heading">Lista de Professores</h2>
-            <input type="search" class="quick-filter" id="prof-search" placeholder="Buscar por nome ou e-mail" aria-label="Filtrar professores">
+            <div class="list-filters">
+                <label for="prof-status-filter" class="a11y-visually-hidden">Filtrar por status</label>
+                <select id="prof-status-filter" class="quick-filter" data-initial="{{ status_filter }}">
+                    <option value="">Todos os status</option>
+                    {% for value, label in status_labels.items() %}
+                    <option value="{{ value }}" {{ 'selected' if value == status_filter else '' }}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+                <input type="search" class="quick-filter" id="prof-search" placeholder="Buscar por nome ou e-mail" aria-label="Filtrar professores" autocomplete="off">
+            </div>
         </div>
 
         <div class="task-list" role="list" aria-label="Professores cadastrados" id="professores-list">
             {% for prof in professores %}
-            <div class="card task-card {{ 'done' if prof.andamento.percentual == 100 else 'pending' }}" role="listitem" id="prof-card-{{ prof.id }}" data-professor-search="{{ (prof.nome ~ ' ' ~ prof.email)|lower }}">
-                <div>
-                    <strong>{{ prof.nome }}</strong>
+            <div class="card task-card prof-card {{ 'done' if prof.andamento.percentual == 100 else 'pending' }}" role="listitem" id="prof-card-{{ prof.id }}" data-professor-search="{{ (prof.nome ~ ' ' ~ prof.email)|lower }}" data-status="{{ prof.status }}">
+                <div class="prof-info">
+                    <strong><a href="{{ url_for('admin.professor_detail', user_id=prof.id) }}">{{ prof.nome }}</a></strong>
                     <p>{{ prof.email }}</p>
-                    <span class="tag">{{ prof.trilhas_atribuidas|length }} Trilhas Atribuídas</span>
+                    <a class="tag" href="{{ url_for('admin.professor_trilhas_page', user_id=prof.id) }}">{{ prof.trilhas_atribuidas|length }} Trilhas Atribuídas</a>
+                    <span class="tag">{{ status_labels[prof.status] }}</span>
                 </div>
                 <div class="user-box">
                     <span id="andamento-label-{{ prof.id }}">Andamento Geral</span>
                     <strong aria-labelledby="andamento-label-{{ prof.id }}">{{ prof.andamento.percentual|int }}%</strong>
                 </div>
-                <button type="button" class="button ghost"
-                        aria-expanded="false" aria-controls="prof-edit-{{ prof.id }}"
-                        aria-label="Editar professor {{ prof.nome }}"
-                        onclick="toggleProfessorEdit({{ prof.id }})">Editar</button>
-            </div>
-            <div id="prof-edit-{{ prof.id }}" class="card" style="display:none; margin-bottom:12px;"
-                 role="group" aria-label="Editar dados de {{ prof.nome }}">
-                <div class="form-group">
-                    <label for="prof-nome-{{ prof.id }}">Nome</label>
-                    <input type="text" id="prof-nome-{{ prof.id }}" value="{{ prof.nome }}">
-                </div>
-                <div class="form-group">
-                    <label for="prof-email-{{ prof.id }}">E-mail</label>
-                    <input type="email" id="prof-email-{{ prof.id }}" value="{{ prof.email }}">
-                </div>
-                <div class="form-group">
-                    <label for="prof-senha-{{ prof.id }}">Senha nova</label>
-                    <input type="password" id="prof-senha-{{ prof.id }}" placeholder="Deixe vazio para manter"
-                           aria-describedby="prof-senha-hint-{{ prof.id }}">
-                    <span id="prof-senha-hint-{{ prof.id }}" class="muted" style="font-size: 12px;">Deixe em branco para manter a senha atual.</span>
-                </div>
-                <div class="actions">
-                    <button type="button" class="button" onclick="submitProfessorEdit({{ prof.id }})"
-                            aria-label="Salvar alterações de {{ prof.nome }}">Salvar</button>
-                    <button type="button" class="button secondary"
-                            aria-label="Cancelar edição de {{ prof.nome }}"
-                            onclick="toggleProfessorEdit({{ prof.id }})">Cancelar</button>
+                <div class="prof-actions">
+                    <a class="button ghost" href="{{ url_for('admin.edit_professor_page', user_id=prof.id) }}"
+                       aria-label="Editar professor {{ prof.nome }}">Editar</a>
+                    <a class="button ghost" href="{{ url_for('admin.professor_trilhas_page', user_id=prof.id) }}"
+                       aria-label="Atribuir trilhas a {{ prof.nome }}">Trilhas</a>
                 </div>
             </div>
             {% endfor %}
+            <p id="prof-no-results" class="admin-empty" hidden>Nenhum professor encontrado para a busca.</p>
             {% if not professores %}
             <p class="admin-empty">Nenhum professor cadastrado ainda.</p>
             {% endif %}
@@ -90,18 +79,6 @@
 {{ super() }}
 <script>
 window.__adminCsrfToken = {{ csrf_token()|tojson }};
-var profSearch = document.getElementById('prof-search');
-if (profSearch) {
-    profSearch.addEventListener('input', function (event) {
-        var query = event.target.value.toLowerCase().trim();
-        document.querySelectorAll('[data-professor-search]').forEach(function (card) {
-            var visible = card.dataset.professorSearch.includes(query);
-            card.style.display = visible ? '' : 'none';
-            var panel = document.getElementById(card.id.replace('prof-card-', 'prof-edit-'));
-            if (panel && !visible) panel.style.display = 'none';
-        });
-    });
-}
 </script>
 <script src="{{ url_for('static', filename='js/admin-professores.js') }}" defer></script>
 {% endblock %}

@@ -1,0 +1,42 @@
+{% extends "admin/editar_base.html" %}
+
+{% set page_title = "Nova Tarefa" %}
+{% set page_subtitle = "Crie a tarefa em duas etapas: preencher e revisar." %}
+{% set active_page = "trilhas" %}
+{% set method = "POST" %}
+{% set endpoint = url_for('trilhas.add_task', trilha_id=trilha.id) %}
+{% set return_url = url_for('admin.trilha_content_page', trilha_id=trilha.id) %}
+{% set edit_title = "Nova tarefa em " ~ trilha.nome %}
+{% set save_label = "Criar tarefa" %}
+
+{% block title %}Admin - Nova tarefa{% endblock %}
+
+{% block breadcrumb %}
+<li><a href="{{ url_for('admin.trilhas_management') }}">Trilhas</a></li>
+<li><a href="{{ url_for('admin.trilha_content_page', trilha_id=trilha.id) }}">{{ trilha.nome }}</a></li>
+<li aria-current="page">Nova tarefa</li>
+{% endblock %}
+
+{% block fields %}
+<div class="form-group">
+    <label for="descricao">Descrição</label>
+    <input type="text" id="descricao" name="descricao" data-review-label="Descrição" aria-required="true" required>
+</div>
+<div class="form-group">
+    <label for="ordem">Ordem</label>
+    <input type="number" id="ordem" name="ordem" min="1" data-review-label="Ordem" data-type="int" aria-describedby="ordem-hint">
+    <span id="ordem-hint" class="form-hint">Deixe vazio para colocar no final da trilha.</span>
+</div>
+<div class="form-group">
+    <label for="material_apoio">Material de apoio</label>
+    <input type="text" id="material_apoio" name="material_apoio" data-review-label="Material de apoio">
+</div>
+<div class="form-group">
+    <label for="link_apoio">Link de apoio</label>
+    <input type="url" id="link_apoio" name="link_apoio" data-review-label="Link de apoio">
+</div>
+<div class="form-group">
+    <label for="documento_apoio">Documento de apoio</label>
+    <input type="text" id="documento_apoio" name="documento_apoio" data-review-label="Documento de apoio">
+</div>
+{% endblock %}

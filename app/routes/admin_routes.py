@@ -3,7 +3,7 @@
 from collections import defaultdict
 from datetime import datetime, timedelta
 
-from flask import Blueprint, render_template, jsonify, request, redirect, url_for
+from flask import Blueprint, render_template, jsonify, request, redirect, url_for, abort
 from flask_login import login_required, current_user
 from app.models.user import RoleEnum
 from app.models.user import User
@@ -13,9 +13,111 @@ from app.models.professor_trilha import ProfessorTrilha, StatusEnum
 from app.models.professor_checklist import ProfessorChecklist
 from app.models.task import Task
 from app import db
+from app.services.professor_trilha_service import ProfessorTrilhaService
 from werkzeug.security import generate_password_hash
 
 admin = Blueprint('admin', __name__)
+
+STATUS_LABELS = {
+    StatusEnum.NAO_INICIADO.value: 'Não iniciado',
+    StatusEnum.EM_ANDAMENTO.value: 'Em andamento',
+    StatusEnum.CONCLUIDO.value: 'Concluído',
+}
+
+
+@admin.context_processor
+def inject_status_labels():
+    return {'status_labels': STATUS_LABELS}
+
+
+def _overall_status(enrollments):
+    """Resume o status geral de um professor a partir das suas trilhas."""
+    if not enrollments:
+        return StatusEnum.NAO_INICIADO.value
+    if all(item.status == StatusEnum.CONCLUIDO for item in enrollments):
+        return StatusEnum.CONCLUIDO.value
+    if any(item.status != StatusEnum.NAO_INICIADO for item in enrollments):
+        return StatusEnum.EM_ANDAMENTO.value
+    return StatusEnum.NAO_INICIADO.value
+
+
+def _professor_or_404(user_id):
+    professor = User.query.get(user_id)
+    if not professor or professor.role != RoleEnum.PROFESSOR:
+        abort(404)
+    return professor
+
+
+def _trilha_or_404(trilha_id):
+    trilha = Checklist.query.get(trilha_id)
+    if not trilha:
+        abort(404)
+    return trilha
+
+
+def _parse_assignments(data, key):
+    """Converte {'atribuicoes': [{<key>: id, 'status': ...}]} em {id: status}."""
+    items = data.get('atribuicoes')
+    if not isinstance(items, list):
+        raise ValueError('atribuicoes deve ser uma lista')
+
+    desired = {}
+    for item in items:
+        try:
+            desired[int(item.get(key))] = item.get('status') or StatusEnum.NAO_INICIADO.value
+        except (TypeError, ValueError, AttributeError):
+            raise ValueError(f'{key} inválido')
+    return desired
+
+
+def _professor_trilha_rows(professor):
+    """Todas as trilhas, indicando a atribuição (se houver) deste professor."""
+    enrollments = {
+        item.trilha_id: item
+        for item in ProfessorTrilha.query.filter_by(professor_id=professor.id).all()
+    }
+    rows = []
+    for trilha in Checklist.query.order_by(Checklist.nome).all():
+        enrollment = enrollments.get(trilha.id)
+        total = len(trilha.tasks)
+        concluidas = (
+            ProfessorTrilhaService.count_completed_tasks(professor.id, trilha.id) if enrollment else 0
+        )
+        rows.append({
+            'id': trilha.id,
+            'nome': trilha.nome,
+            'tipo': trilha.tipo.value if trilha.tipo else None,
+            'obrigatoria': trilha.obrigatoria,
+            'total_tarefas': total,
+            'atribuida': enrollment is not None,
+            'status': enrollment.status.value if enrollment else None,
+            'concluidas': concluidas,
+            'percentual': int(concluidas / total * 100) if total else 0,
+        })
+    return rows
+
+
+def _trilha_professor_rows(trilha):
+    """Todos os professores, indicando a atribuição (se houver) a esta trilha."""
+    enrollments = {
+        item.professor_id: item
+        for item in ProfessorTrilha.query.filter_by(trilha_id=trilha.id).all()
+    }
+    rows = []
+    for professor in User.query.filter_by(role=RoleEnum.PROFESSOR).order_by(User.nome).all():
+        enrollment = enrollments.get(professor.id)
+        concluidas = (
+            ProfessorTrilhaService.count_completed_tasks(professor.id, trilha.id) if enrollment else 0
+        )
+        rows.append({
+            'id': professor.id,
+            'nome': professor.nome,
+            'email': professor.email,
+            'atribuida': enrollment is not None,
+            'status': enrollment.status.value if enrollment else None,
+            'concluidas': concluidas,
+        })
+    return rows
 
 
 def _payload():
@@ -249,11 +351,7 @@ def professores():
                     ProfessorChecklist.concluido == True,
                 ).count()
 
-        status = StatusEnum.NAO_INICIADO.value
-        if any(item.status == StatusEnum.CONCLUIDO for item in enrollments):
-            status = StatusEnum.CONCLUIDO.value
-        elif any(item.status == StatusEnum.EM_ANDAMENTO for item in enrollments):
-            status = StatusEnum.EM_ANDAMENTO.value
+        status = _overall_status(enrollments)
 
         payload.append({
             'id': professor.id,
@@ -268,7 +366,16 @@ def professores():
             },
         })
 
-    return render_template('admin/admin_professores.html', user=current_user, professores=payload)
+    status_filter = request.args.get('status')
+    if status_filter not in STATUS_LABELS:
+        status_filter = ''
+
+    return render_template(
+        'admin/admin_professores.html',
+        user=current_user,
+        professores=payload,
+        status_filter=status_filter,
+    )
 
 
 @admin.route('/professores', methods=['POST'])
@@ -297,6 +404,160 @@ def create_professor():
         return redirect(url_for('admin.professores'))
 
     return jsonify({'id': user.id, 'nome': user.nome, 'email': user.email, 'role': user.role.value}), 201
+
+
+@admin.route('/professores/<int:user_id>', methods=['GET'])
+@login_required
+def professor_detail(user_id):
+    """Ficha do professor: dados, trilhas atribuídas com progresso e feedbacks enviados."""
+    if current_user.role != RoleEnum.ADMIN:
+        return jsonify({'error': 'Acesso negado'}), 403
+
+    professor = _professor_or_404(user_id)
+    trilhas = [row for row in _professor_trilha_rows(professor) if row['atribuida']]
+    feedbacks = Feedback.query.filter_by(professor_id=professor.id).order_by(Feedback.data_envio.desc()).all()
+
+    return render_template(
+        'admin/admin_professor_ficha.html',
+        user=current_user,
+        professor=professor,
+        trilhas=trilhas,
+        feedbacks=feedbacks,
+    )
+
+
+@admin.route('/professores/<int:user_id>/trilhas', methods=['GET'])
+@login_required
+def professor_trilhas_page(user_id):
+    """Tela para atribuir ou remover trilhas de um professor."""
+    if current_user.role != RoleEnum.ADMIN:
+        return jsonify({'error': 'Acesso negado'}), 403
+
+    professor = _professor_or_404(user_id)
+    return render_template(
+        'admin/admin_atribuir_trilhas.html',
+        user=current_user,
+        professor=professor,
+        rows=_professor_trilha_rows(professor),
+    )
+
+
+@admin.route('/professores/<int:user_id>/trilhas', methods=['PUT'])
+@login_required
+def sync_professor_trilhas(user_id):
+    """Sincroniza as trilhas atribuídas a um professor com a lista enviada."""
+    if current_user.role != RoleEnum.ADMIN:
+        return jsonify({'error': 'Acesso negado'}), 403
+
+    _professor_or_404(user_id)
+    try:
+        desired = _parse_assignments(_payload(), 'trilha_id')
+        summary = ProfessorTrilhaService.sync_professor_trilhas(user_id, desired)
+        return jsonify({'message': 'Trilhas atualizadas com sucesso', **summary})
+    except ValueError as error:
+        return jsonify({'error': str(error)}), 400
+
+
+@admin.route('/trilhas/<int:trilha_id>/professores', methods=['GET'])
+@login_required
+def trilha_professores_page(trilha_id):
+    """Tela para atribuir ou remover professores de uma trilha."""
+    if current_user.role != RoleEnum.ADMIN:
+        return jsonify({'error': 'Acesso negado'}), 403
+
+    trilha = _trilha_or_404(trilha_id)
+    return render_template(
+        'admin/admin_trilha_professores.html',
+        user=current_user,
+        trilha=trilha,
+        rows=_trilha_professor_rows(trilha),
+    )
+
+
+@admin.route('/trilhas/<int:trilha_id>/professores', methods=['PUT'])
+@login_required
+def sync_trilha_professores(trilha_id):
+    """Sincroniza os professores atribuídos a uma trilha com a lista enviada."""
+    if current_user.role != RoleEnum.ADMIN:
+        return jsonify({'error': 'Acesso negado'}), 403
+
+    _trilha_or_404(trilha_id)
+    try:
+        desired = _parse_assignments(_payload(), 'professor_id')
+        summary = ProfessorTrilhaService.sync_trilha_professores(trilha_id, desired)
+        return jsonify({'message': 'Professores atualizados com sucesso', **summary})
+    except ValueError as error:
+        return jsonify({'error': str(error)}), 400
+
+
+@admin.route('/trilhas/<int:trilha_id>/conteudo', methods=['GET'])
+@login_required
+def trilha_content_page(trilha_id):
+    """Tela de conteúdo da trilha: tarefas em ordem, com edição, exclusão e reordenação."""
+    if current_user.role != RoleEnum.ADMIN:
+        return jsonify({'error': 'Acesso negado'}), 403
+
+    trilha = _trilha_or_404(trilha_id)
+    tasks = sorted(trilha.tasks, key=lambda item: item.ordem)
+    return render_template('admin/admin_trilha_conteudo.html', user=current_user, trilha=trilha, tasks=tasks)
+
+
+@admin.route('/trilhas/<int:trilha_id>/tarefas/nova', methods=['GET'])
+@login_required
+def new_task_page(trilha_id):
+    """Tela (jornada em passos) para criar uma tarefa dentro de uma trilha."""
+    if current_user.role != RoleEnum.ADMIN:
+        return jsonify({'error': 'Acesso negado'}), 403
+
+    trilha = _trilha_or_404(trilha_id)
+    return render_template('admin/admin_tarefa_nova.html', user=current_user, trilha=trilha)
+
+
+@admin.route('/professores/<int:user_id>/editar', methods=['GET'])
+@login_required
+def edit_professor_page(user_id):
+    """Exibe a tela de edição (jornada em passos) de um professor."""
+    if current_user.role != RoleEnum.ADMIN:
+        return jsonify({'error': 'Acesso negado'}), 403
+
+    professor = User.query.get(user_id)
+    if not professor or professor.role != RoleEnum.PROFESSOR:
+        abort(404)
+
+    return render_template('admin/admin_professor_editar.html', user=current_user, professor=professor)
+
+
+@admin.route('/trilhas/<int:trilha_id>/editar', methods=['GET'])
+@login_required
+def edit_trilha_page(trilha_id):
+    """Exibe a tela de edição (jornada em passos) de uma trilha."""
+    if current_user.role != RoleEnum.ADMIN:
+        return jsonify({'error': 'Acesso negado'}), 403
+
+    trilha = Checklist.query.get(trilha_id)
+    if not trilha:
+        abort(404)
+
+    return render_template(
+        'admin/admin_trilha_editar.html',
+        user=current_user,
+        trilha=trilha,
+        tipos=[tipo.value for tipo in TipoEnum],
+    )
+
+
+@admin.route('/tarefas/<int:task_id>/editar', methods=['GET'])
+@login_required
+def edit_task_page(task_id):
+    """Exibe a tela de edição (jornada em passos) de uma tarefa."""
+    if current_user.role != RoleEnum.ADMIN:
+        return jsonify({'error': 'Acesso negado'}), 403
+
+    task = Task.query.get(task_id)
+    if not task:
+        abort(404)
+
+    return render_template('admin/admin_tarefa_editar.html', user=current_user, task=task, trilha=task.checklist)
 
 
 @admin.route('/professores/<int:user_id>', methods=['PUT', 'PATCH'])
@@ -341,18 +602,31 @@ def trilhas_management():
         return jsonify({'error': 'Acesso negado'}), 403
 
     trilhas = Checklist.query.order_by(Checklist.nome).all()
-    trilhas_data = [
-        {
+    trilhas_data = []
+    for trilha in trilhas:
+        counts = {value: 0 for value in STATUS_LABELS}
+        for enrollment in ProfessorTrilha.query.filter_by(trilha_id=trilha.id).all():
+            counts[enrollment.status.value] += 1
+        trilhas_data.append({
             'id': trilha.id,
             'nome': trilha.nome,
             'tipo': trilha.tipo.value if trilha.tipo else None,
             'obrigatoria': trilha.obrigatoria,
             'descricao': trilha.descricao,
             'total_tarefas': len(trilha.tasks),
-        }
-        for trilha in trilhas
-    ]
-    return render_template('admin/admin_trilhas.html', user=current_user, trilhas=trilhas_data)
+            'status_counts': counts,
+        })
+
+    status_filter = request.args.get('status')
+    if status_filter not in STATUS_LABELS:
+        status_filter = ''
+
+    return render_template(
+        'admin/admin_trilhas.html',
+        user=current_user,
+        trilhas=trilhas_data,
+        status_filter=status_filter,
+    )
 
 
 @admin.route('/tarefas-feedbacks', methods=['GET'])

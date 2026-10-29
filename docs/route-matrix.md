@@ -44,8 +44,24 @@ Admin (telas HTML):
 - PUT/PATCH /admin/professores/<id> -> admin -> atualiza (JSON)
 - GET /admin/trilhas -> admin -> HTML
 - GET /admin/tarefas-feedbacks -> admin -> HTML
+- GET /admin/professores/<id>/editar -> admin -> HTML (tela de edição em jornada; 404 se não for professor)
+- GET /admin/trilhas/<id>/editar -> admin -> HTML (tela de edição em jornada; 404 se inexistente)
+- GET /admin/tarefas/<id>/editar -> admin -> HTML (tela de edição em jornada; 404 se inexistente)
+- GET /admin/professores/<id> -> admin -> HTML (ficha: dados, trilhas com status/progresso, feedbacks)
+- GET /admin/professores/<id>/trilhas -> admin -> HTML (atribuir/remover trilhas do professor)
+- PUT /admin/professores/<id>/trilhas -> admin -> JSON (sincroniza atribuições; 400 em payload/status inválido)
+- GET /admin/trilhas/<id>/professores -> admin -> HTML (atribuir/remover professores da trilha)
+- PUT /admin/trilhas/<id>/professores -> admin -> JSON (sincroniza atribuições)
+- GET /admin/trilhas/<id>/conteudo -> admin -> HTML (tarefas da trilha: ordem, editar, excluir)
+- GET /admin/trilhas/<id>/tarefas/nova -> admin -> HTML (jornada para criar tarefa; salva via POST /trilhas/<id>/tasks)
+- GET /admin/professores?status=<status> e GET /admin/trilhas?status=<status> -> pré-selecionam o filtro de status
 
 Notas:
 - Rotas sob /admin para listagens retornam HTML (padrão do projeto) — use JSON somente em endpoints que explicitamente retornam JSON.
 - O dashboard administrativo atual usa gráficos e insights calculados no backend a partir de progresso, feedbacks e ativações de trilha.
+- As telas de edição só renderizam o formulário; o salvamento reaproveita PATCH /admin/professores/<id>, PATCH /trilhas/<id> e PATCH /tasks/<id>.
+- Status da atribuição professor × trilha: `nao_iniciado` (atribuída pelo admin) → `em_andamento` (professor inicia a trilha ou conclui a 1ª tarefa) → `concluido` (todas as tarefas feitas, automático). O admin pode alternar entre `nao_iniciado` e `em_andamento` e reabrir uma trilha concluída; `nao_iniciado` é recusado se já há tarefas concluídas.
+- POST /trilhas/<id>/start também funciona para trilha já atribuída como `nao_iniciado` (passa para `em_andamento`).
+- Remover uma atribuição apaga as conclusões de tarefa do professor naquela trilha.
+- O nome da trilha é gravado com iniciais maiúsculas (preposições como "de" e "ao" ficam minúsculas; siglas são preservadas).
 - A UI admin utiliza atualização incremental para operações de criação/edição sem exigir recarga total da página em todos os fluxos.

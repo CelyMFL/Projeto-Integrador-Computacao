@@ -19,39 +19,14 @@
                     <option value="{{ item.trilha_id }}">{{ item.trilha_nome }}</option>
                     {% endfor %}
                 </select>
-                <button data-open-add-task class="button" aria-expanded="false" aria-controls="add-task-form">+ Adicionar Tarefa</button>
-            </div>
-
-            <div id="add-task-form" class="card" style="display:none; margin-bottom:16px;" role="group" aria-label="Formulário de nova tarefa">
-                <div class="form-group">
-                    <label for="task-descricao">Descrição</label>
-                    <input id="task-descricao" type="text" aria-required="true">
-                </div>
-                <div class="form-group">
-                    <label for="task-ordem">Ordem</label>
-                    <input id="task-ordem" type="number" min="1">
-                </div>
-                <div class="form-group">
-                    <label for="task-material">Material de apoio</label>
-                    <input id="task-material" type="text">
-                </div>
-                <div class="form-group">
-                    <label for="task-link">Link de apoio</label>
-                    <input id="task-link" type="url">
-                </div>
-                <div class="form-group">
-                    <label for="task-documento">Documento de apoio</label>
-                    <input id="task-documento" type="text">
-                </div>
-                <div class="actions">
-                    <button type="button" class="button" id="submit-add-task">Salvar</button>
-                    <button type="button" class="button secondary" id="cancel-add-task">Cancelar</button>
-                </div>
             </div>
 
             <div id="tasks-container">
                 {% for item in tarefas_por_trilha %}
                 <div id="trilha-{{ item.trilha_id }}" class="trilha-tasks" role="region" aria-label="Tarefas da trilha {{ item.trilha_nome }}">
+                    <div class="actions" style="margin-top: 0; margin-bottom: 12px;">
+                        <a class="button" href="{{ url_for('admin.trilha_content_page', trilha_id=item.trilha_id) }}">Gerenciar conteúdo da trilha</a>
+                    </div>
                     <ul class="task-preview-list">
                         {% for task in item.tarefas %}
                         <li>
@@ -61,7 +36,8 @@
                                 <p>Ordem: {{ task.ordem }}</p>
                             </div>
                             <div class="actions">
-                                <button class="button ghost" disabled aria-label="Edição em breve">Editar</button>
+                                <a class="button ghost" href="{{ url_for('admin.edit_task_page', task_id=task.id) }}"
+                                   aria-label="Editar tarefa {{ task.descricao }}">Editar</a>
                             </div>
                         </li>
                         {% endfor %}
@@ -72,7 +48,6 @@
                 </div>
                 {% endfor %}
             </div>
-            <button data-open-add-task class="button" style="width: 100%;" aria-expanded="false" aria-controls="add-task-form">+ Adicionar Tarefa</button>
         </div>
     </section>
 

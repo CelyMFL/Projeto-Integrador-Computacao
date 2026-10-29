@@ -1,0 +1,59 @@
+{% extends "admin/layout.html" %}
+
+{% block admin_content %}
+<div class="edit-journey assign-journey">
+    <nav aria-label="Você está em">
+        <ol class="breadcrumb">
+            {% block breadcrumb %}{% endblock %}
+        </ol>
+    </nav>
+
+    <ol class="journey-steps" aria-label="Etapas da atribuição">
+        <li class="journey-pill current" data-step-pill="1" aria-current="step">1. Selecionar</li>
+        <li class="journey-pill" data-step-pill="2">2. Revisão</li>
+    </ol>
+
+    <form id="assign-form" class="card"
+          data-endpoint="{{ endpoint }}" data-key="{{ key }}" data-return-url="{{ return_url }}" novalidate>
+        <section data-step="1" aria-labelledby="step-1-title">
+            <h2 id="step-1-title" tabindex="-1">{{ assign_title }}</h2>
+            <p class="form-hint">{{ assign_hint }}</p>
+
+            <div class="form-group">
+                <label for="assign-search">Buscar</label>
+                <input type="search" id="assign-search" placeholder="Digite parte do nome" autocomplete="off">
+            </div>
+
+            <ul class="assign-list" id="assign-list" aria-label="{{ assign_title }}">
+                {% block rows %}{% endblock %}
+            </ul>
+            <p id="assign-no-results" class="admin-empty" hidden>Nada encontrado para a busca.</p>
+
+            <div class="actions">
+                <a class="button secondary" href="{{ return_url }}">Cancelar</a>
+                <button type="button" class="button" data-next>Revisar alterações</button>
+            </div>
+        </section>
+
+        <section data-step="2" hidden aria-labelledby="step-2-title">
+            <h2 id="step-2-title" tabindex="-1">Revisar e confirmar</h2>
+            <ul id="review-changes" class="review-changes"></ul>
+            <p id="review-empty" class="admin-empty" hidden>Nenhuma alteração a salvar.</p>
+            <div class="actions">
+                <button type="button" class="button secondary" data-back>Voltar e ajustar</button>
+                <button type="submit" class="button" id="assign-save">Salvar alterações</button>
+            </div>
+        </section>
+
+        <p id="form-status" class="form-status" role="alert"></p>
+    </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+window.__adminCsrfToken = {{ csrf_token()|tojson }};
+</script>
+<script src="{{ url_for('static', filename='js/admin-atribuicao.js') }}" defer></script>
+{% endblock %}

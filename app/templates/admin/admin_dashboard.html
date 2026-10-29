@@ -34,7 +34,7 @@
         <article class="metric-tile" role="listitem">
             <h3>Conclusão de Trilhas</h3>
             <strong>{{ summary.conclusao_global_percentual }}%</strong>
-            <span class="metric-foot">{{ summary.trilhas_concluidas }} concluídas e {{ summary.trilhas_em_andamento }} em andamento</span>
+            <span class="metric-foot"><a href="{{ url_for('admin.professores', status='concluido') }}">{{ summary.trilhas_concluidas }} concluídas</a> e <a href="{{ url_for('admin.professores', status='em_andamento') }}">{{ summary.trilhas_em_andamento }} em andamento</a></span>
         </article>
         <article class="metric-tile" role="listitem">
             <h3>Tempo Médio</h3>

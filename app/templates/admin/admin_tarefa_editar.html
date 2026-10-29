@@ -1,0 +1,39 @@
+{% extends "admin/editar_base.html" %}
+
+{% set page_title = "Editar Tarefa" %}
+{% set page_subtitle = "Atualize a tarefa em duas etapas: preencher e revisar." %}
+{% set active_page = "tarefas" %}
+{% set endpoint = url_for('tasks.update_task', task_id=task.id) %}
+{% set return_url = url_for('admin.tasks_feedbacks_management') %}
+{% set edit_title = "Tarefa da trilha " ~ (trilha.nome if trilha else task.checklist_id) %}
+
+{% block title %}Admin - Editar tarefa{% endblock %}
+
+{% block breadcrumb %}
+<li><a href="{{ url_for('admin.tasks_feedbacks_management') }}">Tarefas &amp; Feedbacks</a></li>
+{% if trilha %}<li>{{ trilha.nome }}</li>{% endif %}
+<li aria-current="page">{{ task.descricao }}</li>
+{% endblock %}
+
+{% block fields %}
+<div class="form-group">
+    <label for="descricao">Descrição</label>
+    <input type="text" id="descricao" name="descricao" value="{{ task.descricao or '' }}" data-review-label="Descrição" aria-required="true" required>
+</div>
+<div class="form-group">
+    <label for="ordem">Ordem</label>
+    <input type="number" id="ordem" name="ordem" min="1" value="{{ task.ordem }}" data-review-label="Ordem" data-type="int">
+</div>
+<div class="form-group">
+    <label for="material_apoio">Material de apoio</label>
+    <input type="text" id="material_apoio" name="material_apoio" value="{{ task.material_apoio or '' }}" data-review-label="Material de apoio">
+</div>
+<div class="form-group">
+    <label for="link_apoio">Link de apoio</label>
+    <input type="url" id="link_apoio" name="link_apoio" value="{{ task.link_apoio or '' }}" data-review-label="Link de apoio">
+</div>
+<div class="form-group">
+    <label for="documento_apoio">Documento de apoio</label>
+    <input type="text" id="documento_apoio" name="documento_apoio" value="{{ task.documento_apoio or '' }}" data-review-label="Documento de apoio">
+</div>
+{% endblock %}

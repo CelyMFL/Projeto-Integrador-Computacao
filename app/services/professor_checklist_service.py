@@ -177,7 +177,13 @@ class ProfessorChecklistService:
             
             if not prof_trilha:
                 return  # Professor not enrolled in this trilha
-            
+
+            # First completed task moves an allocated trilha to EM_ANDAMENTO
+            if prof_trilha.status == StatusEnum.NAO_INICIADO:
+                prof_trilha.status = StatusEnum.EM_ANDAMENTO
+                prof_trilha.data_inicio = prof_trilha.data_inicio or datetime.utcnow()
+                db.session.commit()
+
             # Get all tasks in trilha
             all_tasks = Task.query.filter_by(checklist_id=checklist_id).all()
             if not all_tasks:

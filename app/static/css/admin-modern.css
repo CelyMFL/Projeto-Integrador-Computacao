@@ -158,13 +158,59 @@ body {
   color: var(--admin-text);
 }
 
+/* Campos de formulário suavizados */
+.admin-container input:not([type="checkbox"]):not([type="radio"]),
+.admin-container select,
+.admin-container textarea,
 .quick-filter {
   width: 100%;
-  max-width: 280px;
-  border: 1px solid #b9c5d1;
-  border-radius: 10px;
-  padding: 11px 12px;
+  min-height: 44px;
+  border: 1px solid var(--admin-border);
+  border-radius: 12px;
+  padding: 11px 14px;
+  background: #fffefb;
+  color: var(--admin-text);
+  font-size: 16px;
+  box-shadow: inset 0 1px 2px rgba(16, 42, 67, 0.04);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+}
+
+.admin-container input::placeholder,
+.admin-container textarea::placeholder {
+  color: #829ab1;
+}
+
+.admin-container input:not([type="checkbox"]):not([type="radio"]):hover,
+.admin-container select:hover,
+.admin-container textarea:hover {
+  border-color: #b8ad96;
+}
+
+.admin-container input:not([type="checkbox"]):not([type="radio"]):focus-visible,
+.admin-container select:focus-visible,
+.admin-container textarea:focus-visible,
+.quick-filter:focus-visible {
+  outline: none;
+  border-color: var(--admin-primary);
   background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.2);
+}
+
+.admin-container input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  margin-right: 8px;
+  accent-color: var(--admin-primary);
+  vertical-align: middle;
+}
+
+.quick-filter {
+  max-width: 280px;
+}
+
+.form-hint {
+  color: var(--admin-muted);
+  font-size: 13px;
 }
 
 .inline-stack {
@@ -206,9 +252,265 @@ body {
   gap: 12px;
 }
 
+/* Lista de professores: colunas fixas para alinhar todos os cards */
+.prof-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 180px 130px;
+  align-items: center;
+  gap: 20px;
+}
+
+.prof-card .prof-info {
+  min-width: 0;
+}
+
+.prof-card .prof-info strong,
+.prof-card .prof-info p {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.prof-card .prof-info p {
+  margin: 2px 0 10px;
+}
+
+.prof-card .user-box {
+  width: 100%;
+  min-width: 0;
+  text-align: right;
+}
+
+.prof-card .button {
+  width: 100%;
+  text-align: center;
+}
+
+/* Tela de edição em jornada */
+.edit-journey {
+  max-width: 760px;
+  margin: 0 auto;
+}
+
+.breadcrumb {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 16px;
+  padding: 0;
+  list-style: none;
+  color: var(--admin-muted);
+  font-size: 14px;
+}
+
+.breadcrumb li + li::before {
+  content: "›";
+  margin-right: 8px;
+}
+
+.breadcrumb a {
+  color: var(--admin-primary);
+  font-weight: 700;
+}
+
+.journey-steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0 0 20px;
+  padding: 0;
+  list-style: none;
+}
+
+.journey-steps .journey-pill.current {
+  background: #d7f0ec;
+  border-color: #b8e0dc;
+  color: var(--admin-primary-dark);
+}
+
+.edit-journey .actions {
+  margin-top: 24px;
+}
+
+.edit-journey .form-status {
+  min-height: 24px;
+  margin-top: 12px;
+  color: var(--admin-danger);
+  font-weight: 700;
+}
+
 @media (max-width: 960px) {
+  .prof-card {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .prof-card .user-box {
+    text-align: left;
+  }
+
   .admin-grid-2,
   .admin-grid-3 {
     grid-template-columns: 1fr;
+  }
+}
+
+.edit-journey [hidden] {
+  display: none;
+}
+
+.review-list {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 10px 20px;
+  margin: 16px 0 0;
+}
+
+.review-list dt {
+  font-weight: 800;
+  color: var(--admin-muted);
+}
+
+.review-list dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+/* Atribuição de trilhas/professores */
+.assign-list,
+.content-list {
+  list-style: none;
+  margin: 16px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.assign-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto 170px;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 14px;
+  border: 1px solid var(--admin-border);
+  border-radius: 12px;
+  background: #fffefb;
+}
+
+.assign-main {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.assign-main label {
+  display: grid;
+  gap: 2px;
+  font-weight: 400;
+}
+
+.assign-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.assign-status select:disabled {
+  opacity: 0.5;
+}
+
+.review-changes {
+  list-style: none;
+  margin: 16px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.review-changes li {
+  padding: 10px 14px;
+  border: 1px solid var(--admin-border);
+  border-left-width: 5px;
+  border-radius: 10px;
+  background: #fffefb;
+}
+
+.review-add { border-left-color: var(--admin-ok); }
+.review-update { border-left-color: var(--admin-accent); }
+.review-remove { border-left-color: var(--admin-danger); }
+.review-warning { font-weight: 700; }
+.review-problem {
+  border-left-color: var(--admin-danger);
+  color: var(--admin-danger);
+  font-weight: 700;
+}
+
+/* Conteúdo da trilha */
+.content-row {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 16px;
+}
+
+.content-order {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #d7f0ec;
+  color: var(--admin-primary-dark);
+  font-weight: 800;
+}
+
+.content-info p {
+  margin: 2px 0 0;
+}
+
+.content-actions {
+  margin-top: 0;
+  justify-content: flex-end;
+}
+
+/* Lista de professores: ações empilhadas e filtros */
+.prof-actions {
+  display: grid;
+  gap: 8px;
+}
+
+.list-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.prof-info strong a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.prof-info strong a:hover,
+.prof-info strong a:focus-visible {
+  text-decoration: underline;
+}
+
+.status-count-line {
+  margin: 8px 0 0;
+  color: var(--admin-muted);
+  font-size: 13px;
+}
+
+@media (max-width: 960px) {
+  .assign-row,
+  .content-row {
+    grid-template-columns: 1fr;
+  }
+
+  .content-actions {
+    justify-content: flex-start;
   }
 }
