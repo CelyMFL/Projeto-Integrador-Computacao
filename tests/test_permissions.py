@@ -52,6 +52,7 @@ ADMIN_ROUTES = [
 ]
 PROFESSOR_ROUTES = [
     ("GET", "/professor/dashboard"),
+    ("GET", "/professor/trilhas"),
     ("GET", "/professor/trilhas/{track}"),
     ("GET", "/professor/tarefas/{task}"),
     ("GET", "/professor/feedback"),

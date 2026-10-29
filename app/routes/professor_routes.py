@@ -131,6 +131,34 @@ def dashboard():
     return render_template('professor/dashboard.html', data=data)
 
 
+@professor.route('/trilhas', methods=['GET'])
+@login_required
+def trilhas_list():
+    """Lista todas as trilhas atribuídas ao professor, com status e progresso."""
+    if current_user.role != RoleEnum.PROFESSOR:
+        return jsonify({'error': 'Acesso negado'}), 403
+
+    enrollments = ProfessorTrilha.query.filter_by(professor_id=current_user.id).all()
+    enrollment_map = {item.trilha_id: item for item in enrollments}
+    completed_ids = {
+        item.task_id
+        for item in ProfessorChecklist.query.filter_by(
+            professor_id=current_user.id,
+            concluido=True,
+        ).all()
+    }
+
+    trilhas = (
+        Checklist.query.filter(Checklist.id.in_(list(enrollment_map))).order_by(Checklist.nome).all()
+        if enrollment_map else []
+    )
+    payload = [_serialize_trilha(trilha, enrollment_map[trilha.id], completed_ids) for trilha in trilhas]
+
+    if request.accept_mimetypes.accept_json and not request.accept_mimetypes.accept_html:
+        return jsonify({'trilhas': payload})
+    return render_template('professor/trilhas.html', trilhas=payload)
+
+
 @professor.route('/trilhas/<int:trilha_id>', methods=['GET'])
 @login_required
 def trilha_detail(trilha_id):

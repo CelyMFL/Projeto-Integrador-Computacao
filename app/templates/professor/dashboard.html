@@ -16,16 +16,12 @@
         <p>Acompanhe suas trilhas, tarefas pendentes e progresso inicial na instituição.</p>
       </div>
 
-      <nav class="topnav" aria-label="Navegação principal">
-        <a href="{{ url_for('professor.dashboard') }}" class="active" aria-current="page">Dashboard</a>
-        <a href="{{ url_for('professor.dashboard') }}">Trilhas</a> <!-- Redireciona para o dashboard que lista trilhas -->
-        <a href="{{ url_for('professor.feedback_form_context') }}">Feedback</a>
-      </nav>
+      {% set nav_active = 'dashboard' %}
+      {% include 'professor/_topnav.html' %}
 
       <div class="user-box">
         <span>Professor(a)</span>
         <strong>{{ data.user.nome if data else current_user.nome }}</strong>
-        <a href="{{ url_for('auth.logout') }}" style="font-size: 12px; margin-left: 10px; color: var(--color-danger); text-decoration: none;">Sair</a>
       </div>
     </div>
   </header>

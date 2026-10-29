@@ -13,6 +13,7 @@ Validação recente:
 
 Professor:
 - GET /professor/dashboard -> professor -> HTML (dashboard) ou JSON quando Accept: application/json
+- GET /professor/trilhas -> professor -> HTML (lista das trilhas atribuídas com status/progresso) ou JSON {trilhas: [...]}
 - GET /professor/trilhas/<id> -> professor -> HTML/JSON
 - GET /professor/tarefas/<id> -> professor -> HTML/JSON
 - GET /professor/feedback -> professor -> HTML/JSON contexto formulário

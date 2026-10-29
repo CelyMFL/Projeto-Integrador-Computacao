@@ -48,6 +48,7 @@ Tema admin (jornada):
 - Edição de registros no admin acontece em tela própria ("jornada"), nunca em painel inline: breadcrumb, indicador de passos (`journey-steps`), passo 1 "Dados", passo 2 "Revisão" e confirmação. Base em `admin/editar_base.html` e `js/admin-editar.js`
 - Campos de formulário admin usam borda suave (`--admin-border`), raio de 12px, altura mínima de 44px e anel de foco `--admin-primary`
 - Atribuição (professor ↔ trilha) usa a mesma jornada em 2 passos: Selecionar (checkbox + status por linha) e Revisão (lista do que será adicionado, alterado e removido, com aviso destacado quando há progresso a apagar). Base em `admin/atribuicao_base.html` e `js/admin-atribuicao.js`
+- Menu do professor é único (`professor/_topnav.html`: Dashboard, Trilhas, Feedback e Sair); toda tela autenticada deve ter o link Sair
 - Cadastro e edição de registros ficam em páginas próprias; a lista só tem busca e o botão "+ Novo ..."
 - Status pertence à atribuição professor × trilha e só aparece em telas de trilha/atribuição, nunca como status "do professor" na lista
 - Status de atribuição aparece sempre como texto (Não iniciado, Em andamento, Concluído) com `status-pill`/`tag`, nunca só por cor

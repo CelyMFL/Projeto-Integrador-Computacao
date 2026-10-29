@@ -16,11 +16,8 @@
         <p>Compartilhe sua percepção sobre o processo de adaptação docente.</p>
       </div>
 
-      <nav class="topnav" aria-label="Navegação principal">
-        <a href="{{ url_for('professor.dashboard') }}">Dashboard</a>
-        <a href="{{ url_for('professor.dashboard') }}">Trilhas</a>
-        <a href="{{ url_for('professor.feedback_form_context') }}" class="active" aria-current="page">Feedback</a>
-      </nav>
+      {% set nav_active = 'feedback' %}
+      {% include 'professor/_topnav.html' %}
     </div>
   </header>
 

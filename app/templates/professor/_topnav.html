@@ -1,0 +1,6 @@
+<nav class="topnav" aria-label="Navegação principal">
+  <a href="{{ url_for('professor.dashboard') }}"{% if nav_active == 'dashboard' %} class="active" aria-current="page"{% endif %}>Dashboard</a>
+  <a href="{{ url_for('professor.trilhas_list') }}"{% if nav_active == 'trilhas' %} class="active" aria-current="page"{% endif %}>Trilhas</a>
+  <a href="{{ url_for('professor.feedback_form_context') }}"{% if nav_active == 'feedback' %} class="active" aria-current="page"{% endif %}>Feedback</a>
+  <a href="{{ url_for('auth.logout') }}" class="logout-link">Sair</a>
+</nav>

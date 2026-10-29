@@ -173,6 +173,7 @@ Feedback:
 ### Professor
 
 - GET /professor/dashboard
+- GET /professor/trilhas
 - GET /professor/trilhas/<trilha_id>
 - GET /professor/tarefas/<task_id>
 - GET /professor/feedback

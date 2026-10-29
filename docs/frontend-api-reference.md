@@ -109,6 +109,15 @@ Exemplo JSON:
 Observação:
 - o percentual exibido no dashboard é calculado dinamicamente a partir das conclusões do professor.
 
+### GET /professor/trilhas
+
+Permissão:
+- apenas professor
+
+Retorno:
+- HTML (trilhas.html) com as trilhas atribuídas, status e progresso
+- JSON {"trilhas": [...]} quando Accept: application/json (mesmo formato de trilha usado no dashboard)
+
 ### GET /professor/trilhas/<trilha_id>
 
 Permissão:

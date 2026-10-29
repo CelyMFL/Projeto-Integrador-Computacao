@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Minhas trilhas</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/accessibility.css') }}">
+</head>
+<body>
+  <header class="topbar" role="banner">
+    <div class="topbar-content">
+      <div>
+        <span class="eyebrow">Onboarding docente</span>
+        <h1>Minhas trilhas</h1>
+        <p>Todas as trilhas atribuídas a você, com status e progresso.</p>
+      </div>
+
+      {% set nav_active = 'trilhas' %}
+      {% include 'professor/_topnav.html' %}
+    </div>
+  </header>
+
+  <main id="main-content" tabindex="-1" class="container">
+    {% set status_labels = {'nao_iniciado': 'Não iniciada', 'em_andamento': 'Em andamento', 'concluido': 'Concluída'} %}
+    <section class="cards-grid" aria-label="Lista de trilhas atribuídas">
+      {% for trilha in trilhas %}
+      <article class="card trail-card">
+        <div class="card-header">
+          <span class="tag tag-{{ 'blue' if trilha.tipo == 'pedagógica' else 'green' if trilha.tipo == 'institucional' else 'purple' }}">
+            {{ trilha.tipo.capitalize() if trilha.tipo else 'Geral' }}
+          </span>
+          {% if trilha.obrigatoria %}
+          <span class="required">Obrigatória</span>
+          {% else %}
+          <span class="optional">Opcional</span>
+          {% endif %}
+          <span class="status-pill {{ 'success' if trilha.status == 'concluido' else ('warning' if trilha.status == 'em_andamento' else '') }}">{{ status_labels[trilha.status] }}</span>
+        </div>
+
+        <h3>{{ trilha.nome }}</h3>
+        <p>{{ trilha.descricao }}</p>
+
+        <div class="progress" role="progressbar"
+             aria-valuenow="{{ trilha.progresso.percentual | round(0) | int }}"
+             aria-valuemin="0" aria-valuemax="100"
+             aria-label="Progresso da trilha {{ trilha.nome }}: {{ trilha.progresso.percentual | round(0) | int }}%">
+          <div class="progress-bar" style="width: {{ trilha.progresso.percentual | round(0) | int }}%;"></div>
+        </div>
+
+        <div class="card-footer">
+          <span>{{ trilha.progresso.tarefas_concluidas }} de {{ trilha.progresso.total_tarefas }} tarefas</span>
+          <a href="{{ url_for('professor.trilha_detail', trilha_id=trilha.id) }}" class="button"
+             aria-label="Abrir trilha {{ trilha.nome }}">Abrir trilha</a>
+        </div>
+      </article>
+      {% endfor %}
+      {% if not trilhas %}
+      <p class="muted">Nenhuma trilha atribuída no momento.</p>
+      {% endif %}
+    </section>
+  </main>
+
+  <script src="{{ url_for('static', filename='js/accessibility.js') }}" defer></script>
+</body>
+</html>

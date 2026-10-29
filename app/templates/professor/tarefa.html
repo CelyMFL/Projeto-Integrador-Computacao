@@ -16,11 +16,8 @@
         <p>Consulte as orientações institucionais antes de concluir esta etapa.</p>
       </div>
 
-      <nav class="topnav" aria-label="Navegação principal">
-        <a href="{{ url_for('professor.dashboard') }}">Dashboard</a>
-        <a href="{{ url_for('professor.trilha_detail', trilha_id=task.checklist_id) }}">Trilhas</a>
-        <a href="{{ url_for('professor.feedback_form_context') }}">Feedback</a>
-      </nav>
+      {% set nav_active = 'trilhas' %}
+      {% include 'professor/_topnav.html' %}
     </div>
   </header>
 
