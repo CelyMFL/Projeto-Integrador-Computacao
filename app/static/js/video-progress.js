@@ -50,13 +50,15 @@
   function marcarComoConcluida() {
     if (jaConcluida || enviado || !completeUrl) { return; }
     enviado = true;
+    var csrfToken = form && form.querySelector('input[name="csrf_token"]');
 
     fetch(completeUrl, {
       method: 'POST',
       credentials: 'same-origin',
       headers: {
         'Content-Type': 'application/json',
-        'Accept': 'application/json'   // faz o Flask responder em JSON
+        'Accept': 'application/json',   // faz o Flask responder em JSON
+        'X-CSRFToken': csrfToken ? csrfToken.value : ''
       },
       body: JSON.stringify({})
     })
