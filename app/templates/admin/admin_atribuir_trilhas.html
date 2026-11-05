@@ -22,7 +22,7 @@
 {% for row in rows %}
 {{ assign_row(row, row.nome,
               row.total_tarefas ~ ' tarefas' ~ (' · ' ~ row.concluidas ~ ' concluídas' if row.atribuida else ''),
-              [('Obrigatória' if row.obrigatoria else 'Opcional')] + ([row.tipo] if row.tipo else [])) }}
+              [('Obrigatória' if row.obrigatoria else 'Opcional')] + ([row.tipo|upper] if row.tipo else [])) }}
 {% endfor %}
 {% if not rows %}<li class="admin-empty">Nenhuma trilha cadastrada.</li>{% endif %}
 {% endblock %}

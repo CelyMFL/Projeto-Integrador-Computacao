@@ -134,14 +134,9 @@ class TaskService:
         
         try:
             checklist_id = task.checklist_id
-<<<<<<< HEAD
             ProfessorChecklist.query.filter_by(task_id=task_id).delete(
                 synchronize_session='fetch'
             )
-=======
-            # Completions reference the task through a FK, so they must go first
-            ProfessorChecklist.query.filter_by(task_id=task_id).delete(synchronize_session=False)
->>>>>>> cea4baf077820c4174d64cd455c65c69a840f185
             db.session.delete(task)
             
             # Re-order remaining tasks

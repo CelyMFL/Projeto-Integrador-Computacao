@@ -47,6 +47,26 @@ body {
   margin: 0;
   color: var(--admin-muted);
   max-width: 52ch;
+  line-height: 1.55;
+  font-size: 15px;
+}
+
+.admin-topbar h1 {
+  font-size: clamp(28px, 2.5vw, 36px);
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  margin-bottom: 10px;
+}
+
+.admin-container h2 {
+  font-size: clamp(22px, 1.8vw, 28px);
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+
+.admin-container h3 {
+  font-size: clamp(18px, 1.3vw, 22px);
+  line-height: 1.25;
 }
 
 .admin-topnav a {
@@ -83,6 +103,15 @@ body {
   margin-top: 24px;
 }
 
+.admin-container .section-header {
+  align-items: center;
+}
+
+.admin-container .section-header h2,
+.admin-container .section-header h3 {
+  margin-bottom: 0;
+}
+
 .admin-grid-2 {
   display: grid;
   gap: 18px;
@@ -100,7 +129,7 @@ body {
   border: 1px solid var(--admin-border);
   border-left: 5px solid var(--admin-primary);
   border-radius: 14px;
-  padding: 18px;
+  padding: 16px;
 }
 
 .metric-tile h3 {
@@ -129,7 +158,7 @@ body {
   background: var(--admin-surface);
   border: 1px solid var(--admin-border);
   border-radius: 14px;
-  padding: 18px;
+  padding: 16px;
 }
 
 .panel h3 {
@@ -154,13 +183,13 @@ body {
 .quick-filter {
   width: 100%;
   min-height: 44px;
-  border: 1px solid var(--admin-border);
-  border-radius: 12px;
+  border: 1px solid #b9c8d8;
+  border-radius: 14px;
   padding: 11px 14px;
-  background: #ffffff;
+  background: linear-gradient(180deg, #ffffff 0%, #f9fbfd 100%);
   color: var(--admin-text);
   font-size: 16px;
-  box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.04);
+  box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.06);
   transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
 }
 
@@ -172,7 +201,7 @@ body {
 .admin-container input:not([type="checkbox"]):not([type="radio"]):hover,
 .admin-container select:hover,
 .admin-container textarea:hover {
-  border-color: #9fb3c8;
+  border-color: #7c97b3;
 }
 
 .admin-container input:not([type="checkbox"]):not([type="radio"]):focus-visible,
@@ -182,7 +211,12 @@ body {
   outline: none;
   border-color: var(--admin-primary);
   background: #ffffff;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.28);
+}
+
+.admin-container .form-group label {
+  font-weight: 800;
+  color: #243b53;
 }
 
 .admin-container input[type="checkbox"] {
@@ -194,7 +228,7 @@ body {
 }
 
 .quick-filter {
-  max-width: 280px;
+  max-width: 300px;
 }
 
 .form-hint {
@@ -208,6 +242,14 @@ body {
   justify-content: space-between;
   gap: 12px;
   flex-wrap: wrap;
+}
+
+.admin-container .card {
+  padding: 18px;
+}
+
+.admin-container .card p {
+  line-height: 1.5;
 }
 
 .card-highlight {
@@ -262,7 +304,7 @@ body {
 }
 
 .prof-card .prof-info p {
-  margin: 2px 0 10px;
+  margin: 4px 0 10px;
 }
 
 .prof-card .user-box {
@@ -342,6 +384,32 @@ body {
   .admin-grid-2,
   .admin-grid-3 {
     grid-template-columns: 1fr;
+  }
+
+  .admin-topbar {
+    padding: 18px 16px;
+  }
+
+  .admin-subtitle {
+    font-size: 14px;
+  }
+
+  .admin-container {
+    margin-top: 18px;
+  }
+
+  .admin-container .card,
+  .panel,
+  .metric-tile {
+    padding: 14px;
+  }
+
+  .metric-tile strong {
+    font-size: 30px;
+  }
+
+  .chart-box {
+    min-height: 220px;
   }
 }
 
@@ -491,6 +559,23 @@ body {
   margin: 8px 0 0;
   color: var(--admin-muted);
   font-size: 13px;
+  line-height: 1.4;
+}
+
+.task-preview-list li {
+  align-items: center;
+}
+
+.task-preview-list p {
+  margin: 4px 0 0;
+}
+
+.list-filters {
+  align-items: center;
+}
+
+.list-filters .button {
+  white-space: nowrap;
 }
 
 @media (max-width: 960px) {
@@ -501,5 +586,42 @@ body {
 
   .content-actions {
     justify-content: flex-start;
+  }
+
+  .list-filters {
+    width: 100%;
+  }
+
+  .list-filters .quick-filter,
+  .list-filters .button {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .admin-topbar h1 {
+    font-size: 26px;
+  }
+
+  .admin-container h2 {
+    font-size: 22px;
+  }
+
+  .admin-container h3 {
+    font-size: 18px;
+  }
+
+  .task-card,
+  .prof-card {
+    gap: 10px;
+  }
+
+  .card-footer {
+    gap: 10px;
+  }
+
+  .journey-steps {
+    gap: 8px;
   }
 }

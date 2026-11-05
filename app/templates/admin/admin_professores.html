@@ -11,15 +11,16 @@
     <div class="section-header inline-stack">
         <h2 id="lista-professores-heading">Lista de Professores</h2>
         <div class="list-filters">
-            <input type="search" class="quick-filter" id="prof-search" placeholder="Buscar por nome" aria-label="Buscar professor por parte do nome" autocomplete="off">
+            <input type="search" class="quick-filter" id="prof-search" placeholder="Buscar por nome ou e-mail" aria-label="Buscar professor por nome ou e-mail" autocomplete="off">
             <a class="button" href="{{ url_for('admin.new_professor_page') }}">+ Novo professor</a>
         </div>
     </div>
+    <p id="prof-search-summary" class="form-hint" aria-live="polite">Digite para filtrar a lista.</p>
 
     <div class="task-list" role="list" aria-label="Professores cadastrados" id="professores-list">
         {% for prof in professores %}
         <div class="card task-card prof-card {{ 'done' if prof.andamento.percentual == 100 else 'pending' }}" role="listitem" id="prof-card-{{ prof.id }}"
-             data-professor-name="{{ prof.nome|lower }}" data-professor-email="{{ prof.email|lower }}">
+             data-professor-search="{{ (prof.nome ~ ' ' ~ prof.email)|lower }}">
             <div class="prof-info">
                 <strong><a href="{{ url_for('admin.professor_detail', user_id=prof.id) }}">{{ prof.nome }}</a></strong>
                 <p>{{ prof.email }}</p>

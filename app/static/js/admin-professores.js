@@ -13,27 +13,31 @@
 
   var searchInput = document.getElementById('prof-search');
   var noResults = document.getElementById('prof-no-results');
+  var summary = document.getElementById('prof-search-summary');
   if (!searchInput) return;
 
   var searchTimer = null;
 
-  // Busca por trecho do nome (ignora acentos e maiúsculas e exige todas as palavras digitadas).
-  // Um termo com "@" é procurado no e-mail.
+  // Busca por nome e e-mail, ignorando acentos e maiúsculas.
   function filterProfessors() {
     var terms = normalize(searchInput.value).split(/\s+/).filter(Boolean);
     var visibleCount = 0;
 
-    document.querySelectorAll('[data-professor-name]').forEach(function (card) {
-      var name = normalize(card.getAttribute('data-professor-name'));
-      var email = normalize(card.getAttribute('data-professor-email'));
+    document.querySelectorAll('[data-professor-search]').forEach(function (card) {
+      var searchable = normalize(card.getAttribute('data-professor-search'));
       var visible = terms.every(function (term) {
-        return (term.indexOf('@') !== -1 ? email : name).indexOf(term) !== -1;
+        return searchable.indexOf(term) !== -1;
       });
       card.style.display = visible ? '' : 'none';
       if (visible) visibleCount += 1;
     });
 
     if (noResults) noResults.hidden = visibleCount > 0 || terms.length === 0;
+    if (summary) {
+      summary.textContent = terms.length
+        ? (visibleCount + (visibleCount === 1 ? ' professor encontrado.' : ' professores encontrados.'))
+        : 'Digite para filtrar a lista.';
+    }
     if (terms.length) {
       announce(visibleCount + (visibleCount === 1 ? ' professor encontrado.' : ' professores encontrados.'));
     }

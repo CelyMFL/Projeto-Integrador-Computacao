@@ -28,7 +28,7 @@
     <label for="tipo">Tipo</label>
     <select id="tipo" name="tipo" data-review-label="Tipo">
         {% for tipo in tipos %}
-        <option value="{{ tipo }}" {{ 'selected' if trilha.tipo and trilha.tipo.value == tipo else '' }}>{{ tipo }}</option>
+        <option value="{{ tipo }}" {{ 'selected' if trilha.tipo and trilha.tipo.value == tipo else '' }}>{{ tipo|upper }}</option>
         {% endfor %}
     </select>
 </div>

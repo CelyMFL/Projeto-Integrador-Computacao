@@ -9,15 +9,20 @@
 {% block admin_content %}
 <div class="section-header inline-stack">
     <h2 id="trilhas-ativas-heading">Trilhas Ativas</h2>
-    <label for="trilha-status-filter" class="a11y-visually-hidden">Filtrar trilhas por status dos professores</label>
-    <select id="trilha-status-filter" class="quick-filter">
-        <option value="">Todas as trilhas</option>
-        {% for value, label in status_labels.items() %}
-        <option value="{{ value }}" {{ 'selected' if value == status_filter else '' }}>Com professores: {{ label }}</option>
-        {% endfor %}
-    </select>
-    <button id="create-trilha-toggle" class="button" aria-expanded="false" aria-controls="create-trilha-form">+ Criar Nova Trilha</button>
+    <div class="list-filters">
+        <label for="trilha-search" class="a11y-visually-hidden">Buscar trilha por nome</label>
+        <input type="search" id="trilha-search" class="quick-filter" placeholder="Buscar trilha por nome" autocomplete="off" aria-label="Buscar trilha por nome">
+        <label for="trilha-status-filter" class="a11y-visually-hidden">Filtrar trilhas por status dos professores</label>
+        <select id="trilha-status-filter" class="quick-filter">
+            <option value="">Todas as trilhas</option>
+            {% for value, label in status_labels.items() %}
+            <option value="{{ value }}" {{ 'selected' if value == status_filter else '' }}>Com professores: {{ label }}</option>
+            {% endfor %}
+        </select>
+        <button id="create-trilha-toggle" class="button" aria-expanded="false" aria-controls="create-trilha-form">+ Criar Nova Trilha</button>
+    </div>
 </div>
+<p id="trilha-search-summary" class="form-hint" aria-live="polite">Use busca por nome e filtro por status em conjunto.</p>
 
 <div id="create-trilha-form" class="card" style="display:none; margin-bottom:16px;" role="group" aria-label="Formulário de nova trilha">
     <form id="form-create-trilha" class="feedback-form" novalidate>
@@ -34,9 +39,9 @@
         <div class="form-group">
             <label for="trilha_tipo">Tipo</label>
             <select id="trilha_tipo" name="tipo">
-                <option value="pedagógica">pedagógica</option>
-                <option value="institucional">institucional</option>
-                <option value="tecnológica">tecnológica</option>
+                <option value="pedagógica">PEDAGÓGICA</option>
+                <option value="institucional">INSTITUCIONAL</option>
+                <option value="tecnológica">TECNOLÓGICA</option>
             </select>
         </div>
         <div class="form-group">
@@ -52,6 +57,7 @@
 <div class="cards-grid" role="list" aria-labelledby="trilhas-ativas-heading" id="trilhas-grid">
     {% for trilha in trilhas %}
     <article class="card trail-card" role="listitem" id="trilha-card-{{ trilha.id }}"
+             data-trilha-name="{{ trilha.nome|lower }}"
              {% for value in status_labels %}data-count-{{ value }}="{{ trilha.status_counts[value] }}" {% endfor %}>
         <div class="card-header">
             {% if trilha.obrigatoria %}
@@ -60,7 +66,7 @@
             <span class="optional">Opcional</span>
             {% endif %}
             {% if trilha.tipo %}
-            <span class="tag">{{ trilha.tipo }}</span>
+            <span class="tag">{{ trilha.tipo|upper }}</span>
             {% endif %}
         </div>
         <h3 id="trilha-nome-{{ trilha.id }}">{{ trilha.nome }}</h3>
@@ -77,7 +83,7 @@
                    aria-label="Professores da trilha {{ trilha.nome }}">Professores</a>
                 <a href="{{ url_for('admin.edit_trilha_page', trilha_id=trilha.id) }}" class="button ghost"
                    aria-label="Editar trilha {{ trilha.nome }}">Editar</a>
-                <button onclick="deleteTrilha({{ trilha.id }})" class="button ghost" aria-label="Excluir trilha {{ trilha.nome }}">Excluir</button>
+                <button type="button" class="button ghost js-delete-trilha" data-trilha-id="{{ trilha.id }}" aria-label="Excluir trilha {{ trilha.nome }}">Excluir</button>
             </div>
         </div>
     </article>
@@ -91,8 +97,6 @@
 
 {% block scripts %}
 {{ super() }}
-<script>
-window.__adminCsrfToken = {{ csrf_token()|tojson }};
-</script>
+<input type="hidden" id="admin-csrf-token" value="{{ csrf_token() }}">
 <script src="{{ url_for('static', filename='js/admin-trilhas.js') }}" defer></script>
 {% endblock %}

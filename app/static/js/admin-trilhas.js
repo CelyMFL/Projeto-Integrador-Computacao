@@ -7,6 +7,10 @@
     }
   }
 
+  function normalize(text) {
+    return (text || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
+  }
+
   function confirmAction(msg) {
     if (window.A11y && window.A11y.confirmAction) {
       return window.A11y.confirmAction(msg);
@@ -18,6 +22,8 @@
   var createFormPanel = document.getElementById('create-trilha-form');
   var createForm = document.getElementById('form-create-trilha');
   var cardsGrid = document.getElementById('trilhas-grid');
+  var csrfTokenNode = document.getElementById('admin-csrf-token');
+  var csrfToken = csrfTokenNode ? csrfTokenNode.value : '';
 
   function setCreateForm(open) {
     if (!createFormPanel || !createToggle) return;
@@ -37,27 +43,49 @@
   }
 
   // Filtro: mostra só trilhas que têm professores no status escolhido.
+  var searchInput = document.getElementById('trilha-search');
+  var searchSummary = document.getElementById('trilha-search-summary');
   var statusFilter = document.getElementById('trilha-status-filter');
   var noResults = document.getElementById('trilha-no-results');
 
   function filterTrilhas(shouldAnnounce) {
-    var status = statusFilter.value;
+    var status = statusFilter ? statusFilter.value : '';
+    var terms = searchInput ? normalize(searchInput.value).split(/\s+/).filter(Boolean) : [];
     var visible = 0;
     document.querySelectorAll('#trilhas-grid .trail-card').forEach(function (card) {
-      var show = !status || parseInt(card.getAttribute('data-count-' + status), 10) > 0;
+      var hasStatus = !status || parseInt(card.getAttribute('data-count-' + status), 10) > 0;
+      var name = normalize(card.querySelector('h3') ? card.querySelector('h3').textContent : '');
+      var hasSearch = terms.every(function (term) { return name.indexOf(term) !== -1; });
+      var show = hasStatus && hasSearch;
       card.style.display = show ? '' : 'none';
       if (show) visible += 1;
     });
-    if (noResults) noResults.hidden = visible > 0 || !status;
-    if (shouldAnnounce && status) {
+    if (noResults) noResults.hidden = visible > 0 || (!status && !terms.length);
+    if (searchSummary) {
+      if (!status && !terms.length) {
+        searchSummary.textContent = 'Use busca por nome e filtro por status em conjunto.';
+      } else {
+        searchSummary.textContent = visible + (visible === 1 ? ' trilha encontrada.' : ' trilhas encontradas.');
+      }
+    }
+    if (shouldAnnounce && (status || terms.length)) {
       announce(visible + (visible === 1 ? ' trilha encontrada.' : ' trilhas encontradas.'));
     }
   }
 
   if (statusFilter) {
     statusFilter.addEventListener('change', function () { filterTrilhas(true); });
-    if (statusFilter.value) filterTrilhas(false);
   }
+
+  if (searchInput) {
+    var timer = null;
+    searchInput.addEventListener('input', function () {
+      clearTimeout(timer);
+      timer = setTimeout(function () { filterTrilhas(true); }, 180);
+    });
+  }
+
+  filterTrilhas(false);
 
   var cancel = document.getElementById('create-trilha-cancel');
   if (cancel) {
@@ -85,7 +113,7 @@
     header.appendChild(trilha.obrigatoria
       ? element('span', 'required', 'Obrigatória')
       : element('span', 'optional', 'Opcional'));
-    if (trilha.tipo) header.appendChild(element('span', 'tag', trilha.tipo));
+    if (trilha.tipo) header.appendChild(element('span', 'tag', String(trilha.tipo).toUpperCase()));
 
     var title = element('h3', '', trilha.nome);
     title.id = 'trilha-nome-' + trilha.id;
@@ -119,6 +147,7 @@
     card.appendChild(header);
     card.appendChild(title);
     card.appendChild(desc);
+    card.appendChild(element('p', 'status-count-line', 'Não iniciado: 0 · Em andamento: 0 · Concluído: 0'));
     card.appendChild(footer);
     return card;
   }
@@ -138,7 +167,7 @@
         method: 'POST',
         headers: {
           'Accept': 'application/json',
-          'X-CSRFToken': window.__adminCsrfToken,
+          'X-CSRFToken': csrfToken,
         },
         body: data,
       }).then(async function (res) {
@@ -151,6 +180,7 @@
         if (cardsGrid) cardsGrid.prepend(buildCard(body));
         createForm.reset();
         setCreateForm(false);
+        filterTrilhas(false);
         announce('Trilha criada com sucesso.');
       });
     });
@@ -161,7 +191,7 @@
 
     fetch('/trilhas/' + id, {
       method: 'DELETE',
-      headers: { 'X-CSRFToken': window.__adminCsrfToken },
+      headers: { 'X-CSRFToken': csrfToken },
     }).then(async function (res) {
       if (!res.ok) {
         var body = await res.json().catch(function () { return {}; });
@@ -174,4 +204,13 @@
       announce('Trilha excluida com sucesso.');
     });
   };
+
+  document.querySelectorAll('.js-delete-trilha').forEach(function (button) {
+    button.addEventListener('click', function () {
+      var trilhaId = parseInt(button.getAttribute('data-trilha-id'), 10);
+      if (trilhaId) {
+        window.deleteTrilha(trilhaId);
+      }
+    });
+  });
 })();
