@@ -1,0 +1,48 @@
+{% extends "admin/layout.html" %}
+
+{% block admin_content %}
+<div class="edit-journey">
+    <nav aria-label="Você está em">
+        <ol class="breadcrumb">
+            {% block breadcrumb %}{% endblock %}
+        </ol>
+    </nav>
+
+    <ol class="journey-steps" aria-label="Etapas da edição">
+        <li class="journey-pill current" data-step-pill="1" aria-current="step">1. Dados</li>
+        <li class="journey-pill" data-step-pill="2">2. Revisão</li>
+    </ol>
+
+    <form id="edit-form" class="card feedback-form"
+          data-endpoint="{{ endpoint }}" data-method="{{ method or 'PATCH' }}" data-return-url="{{ return_url }}" novalidate>
+        <section data-step="1" aria-labelledby="step-1-title">
+            <h2 id="step-1-title" tabindex="-1">{{ edit_title }}</h2>
+            {% block fields %}{% endblock %}
+            <div class="actions">
+                <a class="button secondary" href="{{ return_url }}">Cancelar</a>
+                <button type="button" class="button" data-next>{{ next_label or 'Revisar alterações' }}</button>
+            </div>
+        </section>
+
+        <section data-step="2" hidden aria-labelledby="step-2-title">
+            <h2 id="step-2-title" tabindex="-1">Revisar e confirmar</h2>
+            <p class="form-hint">Confira os dados abaixo antes de salvar.</p>
+            <dl id="review-list" class="review-list"></dl>
+            <div class="actions">
+                <button type="button" class="button secondary" data-back>Voltar e ajustar</button>
+                <button type="submit" class="button">{{ save_label or 'Salvar alterações' }}</button>
+            </div>
+        </section>
+
+        <p id="form-status" class="form-status" role="alert"></p>
+    </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+window.__adminCsrfToken = {{ csrf_token()|tojson }};
+</script>
+<script src="{{ url_for('static', filename='js/admin-editar.js') }}" defer></script>
+{% endblock %}

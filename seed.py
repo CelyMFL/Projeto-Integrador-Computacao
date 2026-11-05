@@ -7,12 +7,135 @@ from app.models.professor_checklist import ProfessorChecklist
 from app.models.feedback import Feedback
 from werkzeug.security import generate_password_hash
 from sqlalchemy import text
-from datetime import datetime
+from datetime import datetime, timedelta
 
 app = create_app()
 
-with app.app_context():
-    # Remover dados existentes
+SENHA_PADRAO = "123"
+
+PROFESSORES = [
+    ("Professor Teste", "prof@test.com"),
+    ("Ricardo Silva", "ricardo.silva@email.com"),
+    ("Ana Paula", "ana.paula@email.com"),
+    ("João Mendes", "joao.mendes@email.com"),
+    ("Maria Souza", "maria.souza@email.com"),
+    ("Carlos Oliveira", "carlos.oliveira@email.com"),
+]
+
+# Cada tarefa: (descricao, material_apoio, link_apoio). Material e link são opcionais.
+TRILHAS = [
+    {
+        "nome": "Trilha Pedagógica",
+        "descricao": "Orientações sobre práticas pedagógicas, critérios de avaliação e rotina em sala.",
+        "tipo": TipoEnum.PEDAGOGICA,
+        "obrigatoria": True,
+        "tarefas": [
+            ("Ler o projeto político-pedagógico da escola", "Projeto político-pedagógico (PPP)", None),
+            ("Conhecer o currículo e a base curricular do seu componente", "Documento curricular do estado", None),
+            ("Elaborar o plano de ensino do bimestre", "Modelo de plano de ensino", None),
+            ("Conhecer os critérios e instrumentos de avaliação", "Guia de avaliação da aprendizagem", None),
+            ("Registrar frequência e notas no diário de classe", "Manual do diário de classe", None),
+            ("Participar da reunião de alinhamento pedagógico", None, None),
+        ],
+    },
+    {
+        "nome": "Trilha Institucional",
+        "descricao": "Normas, calendário, canais internos e funcionamento geral da instituição.",
+        "tipo": TipoEnum.INSTITUCIONAL,
+        "obrigatoria": True,
+        "tarefas": [
+            ("Ler o regimento escolar", "Regimento escolar", None),
+            ("Consultar o calendário letivo e as datas de conselho de classe", "Calendário letivo", None),
+            ("Conhecer os canais de comunicação com a coordenação e a secretaria", None, None),
+            ("Conhecer o protocolo de ocorrências e acolhimento de estudantes", "Protocolo de convivência escolar", None),
+        ],
+    },
+    {
+        "nome": "Trilha Tecnológica",
+        "descricao": "Acesso aos sistemas acadêmicos e ferramentas digitais.",
+        "tipo": TipoEnum.TECNOLOGICA,
+        "obrigatoria": False,
+        "tarefas": [
+            ("Ativar o e-mail institucional e trocar a senha inicial", None, None),
+            ("Acessar o sistema de secretaria digital", "Tutorial da secretaria digital", None),
+            ("Criar uma turma e publicar uma atividade na plataforma de ensino", "Guia da plataforma de ensino", None),
+        ],
+    },
+    {
+        "nome": "Comunicação Assertiva",
+        "descricao": "Desenvolvimento de habilidades interpessoais para líderes e docentes.",
+        "tipo": TipoEnum.PEDAGOGICA,
+        "obrigatoria": False,
+        "tarefas": [
+            ("Entender os estilos de comunicação: passivo, agressivo e assertivo", "Texto: estilos de comunicação", None),
+            ("Praticar a escuta ativa em uma conversa com um colega", None, None),
+            ("Dar e receber feedback de forma construtiva", "Roteiro de feedback", None),
+            ("Conduzir uma conversa difícil com estudante ou responsável", None, None),
+        ],
+    },
+    {
+        "nome": "Introdução ao Azure",
+        "descricao": "Fundamentos de nuvem e arquitetura para projetos educacionais.",
+        "tipo": TipoEnum.TECNOLOGICA,
+        "obrigatoria": False,
+        "tarefas": [
+            ("Entender o que é computação em nuvem e seus modelos de serviço", None,
+             "https://learn.microsoft.com/pt-br/training/azure/"),
+            ("Conhecer os principais serviços do Azure: computação, rede e armazenamento", None,
+             "https://learn.microsoft.com/pt-br/azure/architecture/"),
+            ("Criar uma conta gratuita e publicar um primeiro recurso", None,
+             "https://azure.microsoft.com/pt-br/free/"),
+        ],
+    },
+]
+
+# Quantidade de tarefas concluídas por professor em cada trilha, na ordem da trilha.
+# 0 = matriculado sem iniciar; igual ao total de tarefas = trilha concluída.
+# O status da trilha é derivado desse número, então os dados ficam sempre coerentes.
+PROGRESSO = {
+    "prof@test.com": {
+        "Trilha Pedagógica": 2,
+        "Trilha Institucional": 1,
+        "Trilha Tecnológica": 0,
+    },
+    "ricardo.silva@email.com": {
+        "Trilha Pedagógica": 5,
+        "Trilha Institucional": 3,
+        "Trilha Tecnológica": 1,
+    },
+    "ana.paula@email.com": {
+        "Trilha Pedagógica": 6,
+        "Introdução ao Azure": 2,
+    },
+    "joao.mendes@email.com": {
+        "Trilha Institucional": 1,
+    },
+    "maria.souza@email.com": {
+        "Trilha Institucional": 4,
+        "Comunicação Assertiva": 2,
+    },
+    "carlos.oliveira@email.com": {
+        "Trilha Tecnológica": 3,
+        "Introdução ao Azure": 0,
+    },
+}
+
+# (e-mail do professor, nome da trilha ou None, comentário)
+FEEDBACKS = [
+    ("ana.paula@email.com", "Introdução ao Azure",
+     "Os módulos de Azure ajudaram a entender como funciona a hospedagem de sistemas na nuvem."),
+    ("ana.paula@email.com", "Trilha Pedagógica",
+     "Excelente material de apoio nas atividades pedagógicas, principalmente o modelo de plano de ensino."),
+    ("ricardo.silva@email.com", "Trilha Institucional",
+     "Seria útil incluir o contato direto de cada setor na trilha institucional."),
+    ("maria.souza@email.com", "Comunicação Assertiva",
+     "A atividade de escuta ativa foi muito boa para aplicar com a turma."),
+    ("carlos.oliveira@email.com", None,
+     "Gostaria de sugerir mais trilhas sobre Inteligência Artificial na educação."),
+]
+
+
+def recriar_banco():
     try:
         engine_name = db.engine.dialect.name
     except Exception:
@@ -29,145 +152,117 @@ with app.app_context():
         db.drop_all()
         db.create_all()
 
-    print("Iniciando a criação de dados...")
 
-    # 1. Criação de Usuários
+def criar_usuarios():
     admin = User(
         nome="Administrador Geral",
         email="admin@test.com",
-        senha=generate_password_hash("123"),
-        role=RoleEnum.ADMIN
+        senha=generate_password_hash(SENHA_PADRAO),
+        role=RoleEnum.ADMIN,
     )
     db.session.add(admin)
 
-    professores = []
-    # Professor padrão para testes
-    prof_teste = User(
-        nome="Professor Teste",
-        email="prof@test.com",
-        senha=generate_password_hash("123"),
-        role=RoleEnum.PROFESSOR
-    )
-    professores.append(prof_teste)
-    db.session.add(prof_teste)
-
-    nomes_prof = ["Ricardo Silva", "Ana Paula", "João Mendes", "Maria Souza", "Carlos Oliveira"]
-    for nome in nomes_prof:
-        email = f"{nome.lower().replace(' ', '.')}@email.com"
-        p = User(
+    professores = {}
+    for nome, email in PROFESSORES:
+        professores[email] = User(
             nome=nome,
             email=email,
-            senha=generate_password_hash("123"),
-            role=RoleEnum.PROFESSOR
+            senha=generate_password_hash(SENHA_PADRAO),
+            role=RoleEnum.PROFESSOR,
         )
-        professores.append(p)
-        db.session.add(p)
-    
+        db.session.add(professores[email])
+
     db.session.commit()
+    return professores
 
-    # 2. Criação de Trilhas (Checklists)
-    trilha_pedagogica = Checklist(
-        nome="Trilha Pedagógica",
-        descricao="Orientações sobre práticas pedagógicas, critérios de avaliação e rotina em sala.",
-        tipo=TipoEnum.PEDAGOGICA,
-        obrigatoria=True
-    )
-    trilha_institucional = Checklist(
-        nome="Trilha Institucional",
-        descricao="Normas, calendário, canais internos e funcionamento geral da instituição.",
-        tipo=TipoEnum.INSTITUCIONAL,
-        obrigatoria=True
-    )
-    trilha_tecnologica = Checklist(
-        nome="Trilha Tecnológica",
-        descricao="Acesso aos sistemas acadêmicos e ferramentas digitais.",
-        tipo=TipoEnum.TECNOLOGICA,
-        obrigatoria=False
-    )
-    trilha_softskills = Checklist(
-        nome="Comunicação Assertiva",
-        descricao="Desenvolvimento de habilidades interpessoais para líderes e docentes.",
-        tipo=TipoEnum.PEDAGOGICA,
-        obrigatoria=False
-    )
-    trilha_azure = Checklist(
-        nome="Introdução ao Azure",
-        descricao="Fundamentos de nuvem e arquitetura para projetos educacionais.",
-        tipo=TipoEnum.TECNOLOGICA,
-        obrigatoria=False
-    )
 
-    trilhas = [trilha_pedagogica, trilha_institucional, trilha_tecnologica, trilha_softskills, trilha_azure]
-    db.session.add_all(trilhas)
+def criar_trilhas():
+    trilhas = {}
+    tarefas = {}
+    for dados in TRILHAS:
+        trilha = Checklist(
+            nome=dados["nome"],
+            descricao=dados["descricao"],
+            tipo=dados["tipo"],
+            obrigatoria=dados["obrigatoria"],
+        )
+        db.session.add(trilha)
+        db.session.flush()
+
+        tarefas[trilha.nome] = []
+        for ordem, (descricao, material, link) in enumerate(dados["tarefas"], start=1):
+            tarefa = Task(
+                descricao=descricao,
+                ordem=ordem,
+                material_apoio=material,
+                link_apoio=link,
+                checklist_id=trilha.id,
+            )
+            db.session.add(tarefa)
+            tarefas[trilha.nome].append(tarefa)
+        trilhas[trilha.nome] = trilha
+
     db.session.commit()
+    return trilhas, tarefas
 
-    # 3. Criação de Tarefas
-    all_tasks = []
-    
-    # Tarefas Pedagógicas
-    for i in range(1, 6):
-        all_tasks.append(Task(descricao=f"Atividade Pedagógica {i}", ordem=i, checklist_id=trilha_pedagogica.id))
-    
-    # Tarefas Institucionais
-    for i in range(1, 5):
-        all_tasks.append(Task(descricao=f"Norma Institucional {i}", ordem=i, checklist_id=trilha_institucional.id))
 
-    # Tarefas Tecnológicas
-    for i in range(1, 4):
-        all_tasks.append(Task(descricao=f"Ferramenta Digital {i}", ordem=i, checklist_id=trilha_tecnologica.id))
+def criar_progresso(professores, trilhas, tarefas):
+    agora = datetime.utcnow()
 
-    # Tarefas Azure
-    for i in range(1, 4):
-        all_tasks.append(Task(descricao=f"Módulo Azure {i}", ordem=i, checklist_id=trilha_azure.id))
+    for email, matriculas in PROGRESSO.items():
+        professor = professores[email]
+        for nome_trilha, concluidas in matriculas.items():
+            lista = tarefas[nome_trilha]
+            total = len(lista)
 
-    db.session.add_all(all_tasks)
-    db.session.commit()
+            if concluidas == 0:
+                status = StatusEnum.NAO_INICIADO
+            elif concluidas >= total:
+                status = StatusEnum.CONCLUIDO
+            else:
+                status = StatusEnum.EM_ANDAMENTO
 
-    # 4. Inscrições e Progresso
-    # Professor de Teste (prof@test.com): Progresso inicial
-    for t in [trilha_pedagogica, trilha_institucional]:
-        db.session.add(ProfessorTrilha(professor_id=prof_teste.id, trilha_id=t.id, status=StatusEnum.EM_ANDAMENTO))
-    db.session.add(ProfessorTrilha(professor_id=prof_teste.id, trilha_id=trilha_tecnologica.id, status=StatusEnum.NAO_INICIADO))
-    
-    # Ricardo Silva (professores[1]): Quase terminando tudo
-    for t in [trilha_pedagogica, trilha_institucional, trilha_tecnologica]:
-        db.session.add(ProfessorTrilha(professor_id=professores[1].id, trilha_id=t.id, status=StatusEnum.EM_ANDAMENTO))
-    
-    # Ana Paula (professores[2]): Concluiu uma e começou outra
-    db.session.add(ProfessorTrilha(professor_id=professores[2].id, trilha_id=trilha_pedagogica.id, status=StatusEnum.CONCLUIDO))
-    db.session.add(ProfessorTrilha(professor_id=professores[2].id, trilha_id=trilha_azure.id, status=StatusEnum.EM_ANDAMENTO))
+            inicio = None if status == StatusEnum.NAO_INICIADO else agora - timedelta(days=concluidas * 3 + 2)
+            fim = agora - timedelta(days=1) if status == StatusEnum.CONCLUIDO else None
+            db.session.add(ProfessorTrilha(
+                professor_id=professor.id,
+                trilha_id=trilhas[nome_trilha].id,
+                status=status,
+                data_inicio=inicio,
+                data_conclusao=fim,
+            ))
 
-    # João Mendes (professores[3]): Só começou a institucional
-    db.session.add(ProfessorTrilha(professor_id=professores[3].id, trilha_id=trilha_institucional.id, status=StatusEnum.EM_ANDAMENTO))
+            for posicao, tarefa in enumerate(lista[:concluidas]):
+                db.session.add(ProfessorChecklist(
+                    professor_id=professor.id,
+                    task_id=tarefa.id,
+                    concluido=True,
+                    data_conclusao=agora - timedelta(days=(concluidas - posicao) * 2),
+                ))
 
     db.session.commit()
 
-    # 5. Conclusões de Tarefas (ProfessorChecklist)
-    ped_tasks = [tk for tk in all_tasks if tk.checklist_id == trilha_pedagogica.id]
-    inst_tasks = [tk for tk in all_tasks if tk.checklist_id == trilha_institucional.id]
 
-    # Professor de Teste concluiu algumas
-    db.session.add(ProfessorChecklist(professor_id=prof_teste.id, task_id=ped_tasks[0].id, concluido=True))
-    db.session.add(ProfessorChecklist(professor_id=prof_teste.id, task_id=ped_tasks[1].id, concluido=True))
-    db.session.add(ProfessorChecklist(professor_id=prof_teste.id, task_id=inst_tasks[0].id, concluido=True))
-
-    # Ricardo concluiu quase todas as pedagógicas
-    for tk in ped_tasks[:4]:
-        db.session.add(ProfessorChecklist(professor_id=professores[1].id, task_id=tk.id, concluido=True))
-    
-    # Ana Paula concluiu todas as pedagógicas (já que o status da trilha é CONCLUIDO)
-    for tk in ped_tasks:
-        db.session.add(ProfessorChecklist(professor_id=professores[2].id, task_id=tk.id, concluido=True))
-
-    # 6. Feedbacks
-    feedbacks = [
-        Feedback(professor_id=professores[1].id, trilha_id=trilha_azure.id, comentario="A trilha de Azure me ajudou muito a entender a migração de servidores."),
-        Feedback(professor_id=professores[2].id, trilha_id=trilha_pedagogica.id, comentario="Excelente material de apoio nas atividades pedagógicas."),
-        Feedback(professor_id=professores[5].id, trilha_id=None, comentario="Gostaria de sugerir mais trilhas sobre Inteligência Artificial.")
-    ]
-    db.session.add_all(feedbacks)
-    
+def criar_feedbacks(professores, trilhas):
+    agora = datetime.utcnow()
+    for indice, (email, nome_trilha, comentario) in enumerate(FEEDBACKS):
+        db.session.add(Feedback(
+            professor_id=professores[email].id,
+            trilha_id=trilhas[nome_trilha].id if nome_trilha else None,
+            comentario=comentario,
+            data_envio=agora - timedelta(days=len(FEEDBACKS) - indice),
+        ))
     db.session.commit()
+
+
+with app.app_context():
+    recriar_banco()
+
+    print("Iniciando a criação de dados...")
+
+    professores = criar_usuarios()
+    trilhas, tarefas = criar_trilhas()
+    criar_progresso(professores, trilhas, tarefas)
+    criar_feedbacks(professores, trilhas)
 
     print("Banco de dados populado com sucesso!")
-

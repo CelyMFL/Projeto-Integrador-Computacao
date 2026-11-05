@@ -1,0 +1,56 @@
+{% extends "admin/layout.html" %}
+
+{% set page_title = "Conteúdo da Trilha" %}
+{% set page_subtitle = "Organize as tarefas de " ~ trilha.nome ~ ": crie, edite, exclua e defina a ordem." %}
+{% set active_page = "trilhas" %}
+
+{% block title %}Admin - Conteúdo da trilha{% endblock %}
+
+{% block admin_content %}
+<nav aria-label="Você está em">
+    <ol class="breadcrumb">
+        <li><a href="{{ url_for('admin.trilhas_management') }}">Trilhas</a></li>
+        <li>{{ trilha.nome }}</li>
+        <li aria-current="page">Conteúdo</li>
+    </ol>
+</nav>
+
+<div class="section-header inline-stack">
+    <h2 id="conteudo-heading">Tarefas ({{ tasks|length }})</h2>
+    <a class="button" href="{{ url_for('admin.new_task_page', trilha_id=trilha.id) }}">+ Nova tarefa</a>
+</div>
+
+<ol id="content-list" class="content-list" aria-labelledby="conteudo-heading"
+    data-reorder-url="{{ url_for('tasks.reorder_tasks', trilha_id=trilha.id) }}">
+    {% for task in tasks %}
+    <li class="card content-row" data-task-id="{{ task.id }}" data-descricao="{{ task.descricao }}"
+        data-delete-url="{{ url_for('tasks.delete_task', task_id=task.id) }}">
+        <span class="content-order" aria-label="Posição">{{ loop.index }}</span>
+        <div class="content-info">
+            <strong>{{ task.descricao }}</strong>
+            <p class="form-hint">
+                {% if task.link_apoio %}Link{% endif %}
+                {% if task.documento_apoio %}{{ ' · ' if task.link_apoio else '' }}Documento{% endif %}
+                {% if task.material_apoio %}{{ ' · ' if (task.link_apoio or task.documento_apoio) else '' }}Material{% endif %}
+                {% if not (task.link_apoio or task.documento_apoio or task.material_apoio) %}Sem material de apoio{% endif %}
+            </p>
+        </div>
+        <div class="actions content-actions">
+            <button type="button" class="button ghost" data-move="up" aria-label="Mover {{ task.descricao }} para cima">↑</button>
+            <button type="button" class="button ghost" data-move="down" aria-label="Mover {{ task.descricao }} para baixo">↓</button>
+            <a class="button ghost" href="{{ url_for('admin.edit_task_page', task_id=task.id) }}" aria-label="Editar tarefa {{ task.descricao }}">Editar</a>
+            <button type="button" class="button ghost" data-delete aria-label="Excluir tarefa {{ task.descricao }}">Excluir</button>
+        </div>
+    </li>
+    {% endfor %}
+</ol>
+<p id="content-empty" class="admin-empty" {{ 'hidden' if tasks else '' }}>Esta trilha ainda não tem tarefas.</p>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+window.__adminCsrfToken = {{ csrf_token()|tojson }};
+</script>
+<script src="{{ url_for('static', filename='js/admin-conteudo.js') }}" defer></script>
+{% endblock %}

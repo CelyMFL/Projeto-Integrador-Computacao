@@ -1,0 +1,26 @@
+{% extends "admin/atribuicao_base.html" %}
+{% from "admin/_assign_row.html" import assign_row %}
+
+{% set page_title = "Professores da Trilha" %}
+{% set page_subtitle = "Escolha quais professores devem fazer esta trilha e acompanhe o status de cada um." %}
+{% set active_page = "trilhas" %}
+{% set endpoint = url_for('admin.sync_trilha_professores', trilha_id=trilha.id) %}
+{% set key = "professor_id" %}
+{% set return_url = url_for('admin.trilhas_management') %}
+{% set assign_title = "Professores em " ~ trilha.nome %}
+{% set assign_hint = "Marque os professores atribuídos. Ao desmarcar um professor com progresso, as tarefas concluídas dele nesta trilha são apagadas." %}
+
+{% block title %}Admin - Professores da trilha{% endblock %}
+
+{% block breadcrumb %}
+<li><a href="{{ url_for('admin.trilhas_management') }}">Trilhas</a></li>
+<li>{{ trilha.nome }}</li>
+<li aria-current="page">Professores</li>
+{% endblock %}
+
+{% block rows %}
+{% for row in rows %}
+{{ assign_row(row, row.nome, row.email, ([row.concluidas ~ ' tarefas concluídas'] if row.atribuida else [])) }}
+{% endfor %}
+{% if not rows %}<li class="admin-empty">Nenhum professor cadastrado.</li>{% endif %}
+{% endblock %}
