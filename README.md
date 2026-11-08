@@ -173,6 +173,7 @@ Feedback:
 ### Professor
 
 - GET /professor/dashboard
+- GET /professor/trilhas
 - GET /professor/trilhas/<trilha_id>
 - GET /professor/tarefas/<task_id>
 - GET /professor/feedback
@@ -212,6 +213,11 @@ Observação de resposta:
 - PUT/PATCH /admin/professores/<user_id>: atualiza professor (JSON)
 - GET /admin/trilhas: gestão HTML
 - GET /admin/tarefas-feedbacks: gestão HTML
+- GET /admin/professores/<id>/editar, /admin/trilhas/<id>/editar, /admin/tarefas/<id>/editar: telas de edição em jornada (HTML)
+- GET /admin/professores/novo: cadastro de professor em jornada (HTML)
+- GET /admin/professores/<id>: ficha do professor (HTML)
+- GET/PUT /admin/professores/<id>/trilhas e GET/PUT /admin/trilhas/<id>/professores: atribuição de trilhas (tela HTML e sincronização JSON)
+- GET /admin/trilhas/<id>/conteudo e /admin/trilhas/<id>/tarefas/nova: conteúdo da trilha e criação de tarefa (HTML)
 
 ## Permissões
 
@@ -225,7 +231,10 @@ Observação de resposta:
 
 - ao concluir tarefa, o sistema registra ProfessorChecklist e tenta concluir automaticamente a trilha quando todas as tarefas estão concluídas
 - ao voltar tarefa para pendente, trilha concluída pode retornar para em_andamento
-- ordenação de tarefas usa campo ordem e endpoint dedicado de reorder
+- status da atribuição: `nao_iniciado` (atribuída pelo admin) vira `em_andamento` quando o professor inicia a trilha ou conclui a primeira tarefa; `concluido` é automático ao terminar todas as tarefas; o admin pode reabrir uma trilha concluída
+- remover uma trilha de um professor (tela de atribuição) apaga as tarefas concluídas dele nessa trilha
+- nomes de trilha são gravados com iniciais maiúsculas (preposições em minúsculas, siglas preservadas)
+- `ordem` da tarefa é a posição dentro da trilha (1..N); criar ou editar com uma posição renumera as demais sem buracos ou duplicatas, e há endpoint dedicado de reorder
 - ao remover uma trilha, o serviço também remove feedbacks, vínculos de professor e conclusões de tarefas associados para evitar falhas de integridade
 
 ## Validação realizada
@@ -249,6 +258,12 @@ Observação:
 Detalhes de payloads e modos de resposta estão em:
 
 - docs/frontend-api-reference.md
+
+Documentação de experiência e evolução:
+
+- docs/design-system.md
+- docs/metrics-glossary.md
+- docs/observability-strategy.md
 
 ## Observações técnicas
 

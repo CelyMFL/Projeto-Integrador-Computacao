@@ -109,6 +109,15 @@ Exemplo JSON:
 Observação:
 - o percentual exibido no dashboard é calculado dinamicamente a partir das conclusões do professor.
 
+### GET /professor/trilhas
+
+Permissão:
+- apenas professor
+
+Retorno:
+- HTML (trilhas.html) com as trilhas atribuídas, status e progresso
+- JSON {"trilhas": [...]} quando Accept: application/json (mesmo formato de trilha usado no dashboard)
+
 ### GET /professor/trilhas/<trilha_id>
 
 Permissão:
@@ -245,6 +254,7 @@ Permissão:
 Entrada:
 - JSON ou form-data
 - campos opcionais: descricao, ordem, material_apoio, link_apoio, documento_apoio
+- ordem é a posição na trilha (1..N): a tarefa entra nessa posição, valores acima de N vão para o fim e as demais são renumeradas sem buracos
 
 Retorno:
 - JSON da tarefa atualizada
@@ -308,7 +318,7 @@ Permissão:
 
 Entrada:
 - JSON ou form-data
-- nome (obrigatório)
+- nome (obrigatório; salvo com iniciais maiúsculas, ex.: "introdução ao azure" → "Introdução ao Azure")
 - descricao (opcional)
 - tipo (opcional): pedagógica | institucional | tecnológica
 - obrigatoria (opcional): true/false, 1/0, sim/yes
@@ -381,7 +391,7 @@ Permissão:
 Entrada:
 - JSON ou form-data
 - descricao (obrigatório)
-- ordem (opcional)
+- ordem (opcional): posição na trilha; vazio coloca no final e as demais são renumeradas
 - material_apoio, link_apoio, documento_apoio (opcionais)
 
 Retorno:
@@ -407,15 +417,50 @@ Retorno:
 
 ```json
 {
-  "total_users": 12,
-  "total_professores": 10,
-  "total_trilhas": 6,
-  "total_obrigatorias": 3,
-  "total_feedbacks": 15,
-  "trilhas_concluidas": 9,
-  "trilhas_em_andamento": 4
+  "summary": {
+    "total_users": 12,
+    "total_professores": 10,
+    "total_trilhas": 6,
+    "total_obrigatorias": 3,
+    "total_feedbacks": 15,
+    "trilhas_concluidas": 9,
+    "trilhas_em_andamento": 4,
+    "conclusao_global_percentual": 64.3,
+    "tempo_medio_conclusao_dias": 11.2,
+    "feedbacks_ultimos_30_dias": 6,
+    "ativacoes_ultimos_30_dias": 8
+  },
+  "analytics": {
+    "status_distribution": {
+      "labels": ["Não iniciado", "Em andamento", "Concluído"],
+      "values": [2, 4, 9]
+    },
+    "trilhas_por_tipo": {
+      "labels": ["Pedagógica", "Institucional", "Tecnológica"],
+      "values": [3, 1, 2]
+    },
+    "feedback_timeline": {
+      "labels": ["2026-05", "2026-06", "2026-07"],
+      "values": [2, 1, 3]
+    },
+    "ativacoes_timeline": {
+      "labels": ["2026-05", "2026-06", "2026-07"],
+      "values": [4, 2, 3]
+    },
+    "completion_by_trilha": {
+      "labels": ["Trilha Pedagógica", "Trilha Tecnológica"],
+      "values": [72.5, 48.0]
+    },
+    "insights": [
+      "Taxa global de conclusão em 64.3%.",
+      "Tempo médio de conclusão estimado em 11.2 dias."
+    ]
+  }
 }
 ```
+
+Observação:
+- o campo `ativacoes_timeline` funciona como proxy de acesso/engajamento usando inícios de trilha (`data_inicio`).
 
 ### GET /admin/professores
 
@@ -466,6 +511,99 @@ Permissão:
 
 Retorno:
 - HTML (admin_tarefas.html)
+
+### GET /admin/professores/novo
+
+Permissão:
+- apenas admin
+
+Retorno:
+- HTML (admin_professor_novo.html): jornada em 2 passos; ao confirmar chama POST /admin/professores (JSON 201) e volta para a lista
+
+### GET /admin/professores/<user_id>
+
+Permissão:
+- apenas admin
+
+Retorno:
+- HTML (admin_professor_ficha.html): dados, trilhas atribuídas com status e progresso, feedbacks enviados
+- 404 se o usuário não existir ou não for professor
+
+### GET /admin/professores/<user_id>/trilhas
+### GET /admin/trilhas/<trilha_id>/professores
+
+Permissão:
+- apenas admin
+
+Retorno:
+- HTML: jornada em 2 passos (Selecionar → Revisão) para atribuir/remover. 404 se o alvo não existir.
+
+### PUT /admin/professores/<user_id>/trilhas
+### PUT /admin/trilhas/<trilha_id>/professores
+
+Permissão:
+- apenas admin (CSRF obrigatório: header X-CSRFToken)
+
+Entrada (JSON):
+- atribuicoes: lista com o estado final desejado; o que não estiver na lista é removido
+- cada item: {"trilha_id": 1, "status": "em_andamento"} (por professor) ou {"professor_id": 2, "status": "nao_iniciado"} (por trilha)
+- status (opcional, padrão nao_iniciado): nao_iniciado | em_andamento | concluido
+
+Regras:
+- concluido só é aceito para atribuição que já está concluída (sem mudança); é calculado automaticamente
+- nao_iniciado é recusado (400) se o professor já concluiu tarefas daquela trilha
+- reabrir (concluido → em_andamento) limpa data_conclusao
+- remover apaga as conclusões de tarefa do professor na trilha
+- a operação é atômica: se qualquer item falhar nada é salvo
+
+Retorno:
+- 200 {"message": "...", "added": n, "updated": n, "removed": n}
+- 400 {"error": "..."} (payload inválido, status inválido, id inexistente ou regra violada)
+- 404 se o professor/trilha da URL não existir
+
+### GET /admin/trilhas/<trilha_id>/conteudo
+
+Permissão:
+- apenas admin
+
+Retorno:
+- HTML (admin_trilha_conteudo.html): tarefas em ordem com editar, excluir e mover (usa POST /tasks/trilhas/<id>/reorder e DELETE /tasks/<id>)
+
+### GET /admin/trilhas/<trilha_id>/tarefas/nova
+
+Permissão:
+- apenas admin
+
+Retorno:
+- HTML (admin_tarefa_nova.html): jornada em 2 passos; ao confirmar chama POST /trilhas/<trilha_id>/tasks
+
+### GET /admin/professores/<user_id>/editar
+
+Permissão:
+- apenas admin
+
+Retorno:
+- HTML (admin_professor_editar.html): jornada em 2 passos (Dados → Revisão)
+- 404 se o usuário não existir ou não for professor
+- ao confirmar, a tela chama PATCH /admin/professores/<user_id> e volta para a lista
+
+### GET /admin/trilhas/<trilha_id>/editar
+
+Permissão:
+- apenas admin
+
+Retorno:
+- HTML (admin_trilha_editar.html), 404 se a trilha não existir
+- ao confirmar, a tela chama PATCH /trilhas/<trilha_id> e volta para a lista
+
+### GET /admin/tarefas/<task_id>/editar
+
+Permissão:
+- apenas admin
+
+Retorno:
+- HTML (admin_tarefa_editar.html), 404 se a tarefa não existir
+- ao confirmar, a tela chama PATCH /tasks/<task_id> e volta para a lista
 
 ## 6) Erros e status comuns
 

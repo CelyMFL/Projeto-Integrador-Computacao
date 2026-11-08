@@ -1,0 +1,67 @@
+{% extends "admin/layout.html" %}
+
+{% set page_title = professor.nome %}
+{% set page_subtitle = "Ficha do professor: dados, trilhas atribuídas e feedbacks enviados." %}
+{% set active_page = "professores" %}
+
+{% block title %}Admin - Ficha do professor{% endblock %}
+
+{% block admin_content %}
+<nav aria-label="Você está em">
+    <ol class="breadcrumb">
+        <li><a href="{{ url_for('admin.professores') }}">Professores</a></li>
+        <li aria-current="page">{{ professor.nome }}</li>
+    </ol>
+</nav>
+
+<div class="dashboard-grid">
+    <section aria-labelledby="ficha-trilhas-heading">
+        <div class="section-header inline-stack">
+            <h2 id="ficha-trilhas-heading">Trilhas atribuídas</h2>
+            <a class="button" href="{{ url_for('admin.professor_trilhas_page', user_id=professor.id) }}">Atribuir trilhas</a>
+        </div>
+
+        <div class="task-list" role="list" aria-labelledby="ficha-trilhas-heading">
+            {% for trilha in trilhas %}
+            <div class="card task-card {{ 'done' if trilha.status == 'concluido' else 'pending' }}" role="listitem">
+                <div>
+                    <strong>{{ trilha.nome }}</strong>
+                    <p>{{ trilha.concluidas }} de {{ trilha.total_tarefas }} tarefas concluídas ({{ trilha.percentual }}%)</p>
+                    {% if trilha.obrigatoria %}<span class="required">Obrigatória</span>{% else %}<span class="optional">Opcional</span>{% endif %}
+                </div>
+                <span class="status-pill {{ 'success' if trilha.status == 'concluido' else ('warning' if trilha.status == 'em_andamento' else '') }}">{{ status_labels[trilha.status] }}</span>
+            </div>
+            {% endfor %}
+            {% if not trilhas %}
+            <p class="admin-empty">Nenhuma trilha atribuída a este professor ainda.</p>
+            {% endif %}
+        </div>
+    </section>
+
+    <aside aria-labelledby="ficha-dados-heading">
+        <div class="card card-highlight">
+            <h3 id="ficha-dados-heading">Dados</h3>
+            <p><strong>Nome:</strong> {{ professor.nome }}</p>
+            <p><strong>E-mail:</strong> {{ professor.email }}</p>
+            <div class="actions">
+                <a class="button ghost" href="{{ url_for('admin.edit_professor_page', user_id=professor.id) }}">Editar dados</a>
+            </div>
+        </div>
+
+        <div class="card" style="margin-top: 16px;">
+            <h3 id="ficha-feedbacks-heading">Feedbacks enviados</h3>
+            <ul class="feedback-stream" aria-labelledby="ficha-feedbacks-heading">
+                {% for feed in feedbacks %}
+                <li class="info-box">
+                    <p>{{ feed.comentario }}</p>
+                    <span class="muted" style="font-size: 12px;">{{ feed.data_envio.strftime('%d/%m/%Y') if feed.data_envio else '' }}</span>
+                </li>
+                {% endfor %}
+            </ul>
+            {% if not feedbacks %}
+            <p class="admin-empty">Nenhum feedback enviado.</p>
+            {% endif %}
+        </div>
+    </aside>
+</div>
+{% endblock %}

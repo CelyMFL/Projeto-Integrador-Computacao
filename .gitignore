@@ -3,3 +3,5 @@
 .env
 .vscode/
 .pytest_cache/
+.claude/
+scratch/

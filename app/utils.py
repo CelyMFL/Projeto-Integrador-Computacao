@@ -7,6 +7,46 @@ from flask import url_for
 _YT_ID = re.compile(r"[A-Za-z0-9_-]{6,20}")
 _DRIVE = re.compile(r"https://drive\.google\.com/file/d/([\w-]+)")
 
+_PALAVRAS_MINUSCULAS = {
+    "a", "o", "as", "os", "e", "ou", "de", "da", "do", "das", "dos",
+    "ao", "aos", "em", "na", "no", "nas", "nos", "para", "por", "pelo", "pela",
+    "pelos", "pelas", "com", "sem", "sobre",
+}
+
+
+def titulo_ptbr(texto):
+    """Capitaliza um título em português.
+
+    Preposições e artigos ficam em minúsculas (exceto na primeira palavra) e
+    siglas ou marcas já escritas com maiúsculas (LGPD, iPhone) são preservadas.
+    """
+    if not texto:
+        return texto
+
+    palavras = []
+    for indice, palavra in enumerate(texto.split()):
+        if palavra.isupper() or any(c.isupper() for c in palavra[1:]):
+            palavras.append(palavra)
+        elif indice > 0 and palavra.lower() in _PALAVRAS_MINUSCULAS:
+            palavras.append(palavra.lower())
+        else:
+            palavras.append(palavra[:1].upper() + palavra[1:].lower())
+    return " ".join(palavras)
+
+
+def external_url(valor):
+    """Devolve o link se for uma URL http(s) completa; caso contrário, None.
+
+    Evita que esquemas como javascript: ou data: virem um href clicável.
+    """
+    if not valor:
+        return None
+    valor = valor.strip()
+    parsed = urlparse(valor)
+    if parsed.scheme in ("http", "https") and parsed.netloc:
+        return valor
+    return None
+
 
 def youtube_embed(url):
     """Converte um link comum do YouTube em URL de embed.
